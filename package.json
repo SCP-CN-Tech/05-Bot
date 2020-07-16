@@ -1,0 +1,24 @@
+{
+  "name": "05-Bot",
+  "version": "1.0.0",
+  "description": "A bot for translation reservation management of SCP-CN (for now)",
+  "main": "trans-reserve.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Joch2520/05-Bot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Joch2520/05-Bot/issues"
+  },
+  "homepage": "https://github.com/Joch2520/05-Bot#readme",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.3",
+    "got": "^11.5.0"
+  }
+}
