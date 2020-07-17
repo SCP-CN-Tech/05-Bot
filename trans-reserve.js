@@ -1,7 +1,7 @@
 const got = require('got');
 const cheerio = require('cheerio');
 const fs = require('fs');
-const config = JSON.parse(fs.readFileSync('./config.json', 'utf-8'))
+const config = require('./configLoader.js')
 class WD {
   constructor(base) {
     this.wiki(base);
@@ -68,7 +68,7 @@ class WD {
     return page_id;
   }
 
-  async source(page) {
+  async source(wiki_page) {
     let page_id = await this.getPageId(wiki_page);
   	let info = await this.module("viewsource/ViewSourceModule", {
   		page_id: page_id
