@@ -1,6 +1,24 @@
 const cheerio = require('cheerio');
 const WD = require('./wikidot.js');
 const EventEmitter = require('events');
+const branch = {
+  "00": "wanderers-library",
+  "01": "scp-wiki",
+  "02": "scp-int",
+  "03": "scp-ru",
+  "04": "scpko",
+  "05": "fondationscp",
+  "06": "scp-pl",
+  "07": "scp-es",
+  "08": "scp-th",
+  "09": "scp-jp",
+  "10": "scp-wiki-de",
+  "11": "fondazionescp",
+  "12": "scp-ukrainian",
+  "13": "scp-pt-br",
+  "14": "scp-cs",
+  "15": ""
+}
 
 class CNTech extends EventEmitter {
   constructor() {
@@ -41,7 +59,13 @@ class CNTech extends EventEmitter {
       %%created_by_id%%
       [[/cell]]
       [[cell]]
-      [[#ifexpr %%form_raw{branch}%% == 15 | %%title%%[!-- ]] [[a href="http://[[#ifexpr %%form_raw{branch}%% == 00 | wanderers-library.wikidot.com ]][[#ifexpr %%form_raw{branch}%% == 01 | www.scp-wiki.net ]][[#ifexpr %%form_raw{branch}%% == 02 | scp-int.wikidot.com ]][[#ifexpr %%form_raw{branch}%% == 03 | scpfoundation.net ]][[#ifexpr %%form_raw{branch}%% == 04 | ko.scp-wiki.net ]][[#ifexpr %%form_raw{branch}%% == 05 | fondationscp.wikidot.com ]][[#ifexpr %%form_raw{branch}%% == 06 | scp-wiki.net.pl ]][[#ifexpr %%form_raw{branch}%% == 07 | scp-es.com ]][[#ifexpr %%form_raw{branch}%% == 08 | scp-th.wikidot.com ]][[#ifexpr %%form_raw{branch}%% == 09 | ja.scp-wiki.net ]][[#ifexpr %%form_raw{branch}%% == 10 | scp-wiki-de.wikidot.com ]][[#ifexpr %%form_raw{branch}%% == 11 | fondazionescp.wikidot.com ]][[#ifexpr %%form_raw{branch}%% == 12 | scp-ukrainian.wikidot.com ]][[#ifexpr %%form_raw{branch}%% == 13 | scp-pt-br.wikidot.com ]][[#ifexpr %%form_raw{branch}%% == 14 | scp-cs.wikidot.com ]]/%%name%%" target="_blank"]]%%title%%[[/a]][!-- --]
+      %%form_raw{branch}%%
+      [[/cell]]
+      [[cell]]
+      %%name%%
+      [[/cell]]
+      [[cell]]
+      %%title%%
       [[/cell]]
       [[cell]]
       %%created_at|%Y-%m-%d|hover%%
@@ -63,13 +87,15 @@ class CNTech extends EventEmitter {
         unixname: $(meta[1]).text().trim(),
         id: $(meta[2]).text().trim(),
       }
-      let a = $(meta[3]).find('a')
+      let a = $(meta[3]).text().trim()
+      if (parseInt(a)<0||parseInt(a)>=15) { a===null }
+      else { a=`http://${branch[a]}.wikidot.com/${$(meta[4]).text().trim()}` }
       let page = {
-        url: a.attr('href'),
-        name: a.attr('href').split('/').pop().trim(),
-        title: a.text().trim(),
+        url: a,
+        name: $(meta[4]).text().trim(),
+        title: $(meta[5]).text().trim(),
       }
-      a = parseInt($(meta[4]).children('span').attr('class').split(' ')[1].substring(5)+'000')
+      a = parseInt($(meta[6]).children('span').attr('class').split(' ')[1].substring(5)+'000')
       let time = {
         raw: a,
         date: new Date(a),
