@@ -152,7 +152,7 @@ class CNTech extends EventEmitter {
       created_at: "older than 30 day"
     })
     info.forEach(v=>{
-      if (trans.exist||time.raw<=now-7776000000) {
+      if (v.trans.exist||v.time.raw<=now-7776000000) {
         this.tech.delete(`reserve:${v.page.name}`).then(stat=>{
           if (stat.status==='ok') {
             console.log(`Successfully deleted "reserve:${v.page.name}"`)
