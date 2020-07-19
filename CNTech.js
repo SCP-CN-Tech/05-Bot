@@ -173,14 +173,14 @@ class CNTech extends EventEmitter {
       if (v.trans.exist||v.time.raw<=now-7776000000) {
         this.tech.delete(`reserve:${v.page.name}`).then(stat=>{
           if (stat.status==='ok') {
-            winston.debug(`Deleted "reserve:${v.page.name}"`)
+            winston.verbose(`Deleted "reserve:${v.page.name}"`)
           } else winston.warn(`${stat.status}: ${stat.message}`)
         })
       }
       else {
         this.tech.rename(`reserve:${v.page.name}`, `outdate:${v.page.name}`).then(stat=>{
           if (stat.status==='ok') {
-            winston.debug(`Renamed "reserve:${v.page.name}" to "outdate:${v.page.name}"`)
+            winston.verbose(`Renamed "reserve:${v.page.name}" to "outdate:${v.page.name}"`)
           } else winston.warn(`${stat.status}: ${stat.message}`)
         })
       }
@@ -200,7 +200,7 @@ class CNTech extends EventEmitter {
       if (v.trans.exist) {
         this.tech.delete(`reserve:${v.page.name}`).then(stat=>{
           if (stat.status==='ok') {
-            winston.debug(`Deleted "reserve:${v.page.name}"`)
+            winston.verbose(`Deleted "reserve:${v.page.name}"`)
           } else winston.warn(`${stat.status}: ${stat.message}`)
         })
       }
@@ -209,7 +209,7 @@ class CNTech extends EventEmitter {
       if (v.trans.exist) {
         this.tech.delete(`outdate:${v.page.name}`).then(stat=>{
           if (stat.status==='ok') {
-            winston.debug(`Deleted "outdate:${v.page.name}"`)
+            winston.verbose(`Deleted "outdate:${v.page.name}"`)
           } else winston.warn(`${stat.status}: ${stat.message}`)
         })
       }
@@ -224,7 +224,7 @@ class CNTech extends EventEmitter {
     info.forEach(v=>{
       this.tech.delete(`outdate:${v.page.name}`).then(stat=>{
         if (stat.status==='ok') {
-          winston.debug(`Deleted "outdate:${v.page.name}"`)
+          winston.verbose(`Deleted "outdate:${v.page.name}"`)
         } else winston.eror(`${stat.status}: ${stat.message}`)
       })
     })
