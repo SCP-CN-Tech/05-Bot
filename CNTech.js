@@ -1,6 +1,7 @@
 const cheerio = require('cheerio');
 const WD = require('./wikidot.js');
 const EventEmitter = require('events');
+const winston = require('winston');
 const branch = {
   "00": "wanderers-library",
   "01": "scp-wiki",
@@ -32,6 +33,10 @@ class CNTech extends EventEmitter {
   login(WD_NAME, WD_PW) {
     this.tech.login(WD_NAME, WD_PW).then(res=>{
       this.emit('ready', res)
+      winston.info(`Bot logged onto scp-tech-cn.`)
+      winston.info(`Bot is ready.`)
+    }).catch(e=>{
+      winston.error(e.message)
     })
   }
 
@@ -80,7 +85,7 @@ class CNTech extends EventEmitter {
     //console.log(res.body)
     let all = $('table').find('tr');
     for (let i = 0; i < all.length; i++) {
-      console.log(`[DEBUG] Retreiving record ${i+1} of ${all.length}`)
+      winston.debug(`Retreiving record ${i+1} of ${all.length}`)
       let meta = $(all[i]).children('td')
       let user = {
         displayName: $(meta[0]).text().trim(),
@@ -155,15 +160,15 @@ class CNTech extends EventEmitter {
       if (v.trans.exist||v.time.raw<=now-7776000000) {
         this.tech.delete(`reserve:${v.page.name}`).then(stat=>{
           if (stat.status==='ok') {
-            console.log(`Successfully deleted "reserve:${v.page.name}"`)
-          } else console.log(`${stat.status}: ${stat.message}`)
+            winston.debug(`Deleted "reserve:${v.page.name}"`)
+          } else winston.warn(`${stat.status}: ${stat.message}`)
         })
       }
       else {
         this.tech.rename(`reserve:${v.page.name}`, `outdate:${v.page.name}`).then(stat=>{
           if (stat.status==='ok') {
-            console.log(`Successfully renamed "reserve:${v.page.name}" to "outdate:${v.page.name}"`)
-          } else console.log(`${stat.status}: ${stat.message}`)
+            winston.debug(`Renamed "reserve:${v.page.name}" to "outdate:${v.page.name}"`)
+          } else winston.warn(`${stat.status}: ${stat.message}`)
         })
       }
     })
@@ -171,14 +176,43 @@ class CNTech extends EventEmitter {
 
   async remove() {
     let info = await this.getInfo({
+      category: "reserve",
+      created_at: null
+    })
+    let info2 = await this.getInfo({
+      category: "outdate",
+      created_at: "older than 30 day"
+    })
+    info.forEach(v=>{
+      if (v.trans.exist) {
+        this.tech.delete(`reserve:${v.page.name}`).then(stat=>{
+          if (stat.status==='ok') {
+            winston.debug(`Deleted "reserve:${v.page.name}"`)
+          } else winston.warn(`${stat.status}: ${stat.message}`)
+        })
+      }
+    })
+    info2.forEach(v=>{
+      if (v.trans.exist) {
+        this.tech.delete(`outdate:${v.page.name}`).then(stat=>{
+          if (stat.status==='ok') {
+            winston.debug(`Deleted "outdate:${v.page.name}"`)
+          } else winston.warn(`${stat.status}: ${stat.message}`)
+        })
+      }
+    })
+  }
+
+  async expire() {
+    let info = await this.getInfo({
       category: "outdate",
       created_at: "older than 90 day"
     })
     info.forEach(v=>{
       this.tech.delete(`outdate:${v.page.name}`).then(stat=>{
         if (stat.status==='ok') {
-          console.log(`Successfully deleted "outdate:${v.page.name}"`)
-        } else console.log(`${stat.status}: ${stat.message}`)
+          winston.debug(`Deleted "outdate:${v.page.name}"`)
+        } else winston.eror(`${stat.status}: ${stat.message}`)
       })
     })
   }

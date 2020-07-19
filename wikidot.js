@@ -1,5 +1,6 @@
 const got = require('got');
 const cheerio = require('cheerio');
+const winston = require('winston');
 class WD {
   constructor(base) {
     this.wiki(base);
@@ -13,6 +14,7 @@ class WD {
     if (!base.startsWith("http")) { base = `http://${base}.wikidot.com` }
     this.base = base;
     this.ajax = `${base}/ajax-module-connector.php`;
+    winston.debug(`Rebased to ${base}.`)
     return this;
   }
   setCookies(v) { Object.assign(this.cookie, v) }
@@ -46,7 +48,7 @@ class WD {
         callbackIndex: 0
 			}
 			})
-    if (res.body.includes("The login and password do not match.")) {throw new Error("The login and password do not match.")}
+    if (res.body.includes("The login and password do not match.")) {throw new Error("Wikidot login and password do not match.")}
     let tmp = res.headers['set-cookie'][1].split("; ")
   	this.cookie.sess = tmp[0]
   	this.cookie.expire = tmp[1].split("=")[1]

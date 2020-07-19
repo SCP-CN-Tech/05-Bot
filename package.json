@@ -19,6 +19,7 @@
   "homepage": "https://github.com/Joch2520/05-Bot#readme",
   "dependencies": {
     "cheerio": "^1.0.0-rc.3",
-    "got": "^11.5.0"
+    "got": "^11.5.0",
+    "winston": "^3.3.3"
   }
 }
