@@ -34,10 +34,23 @@ class CNTech extends EventEmitter {
     this.tech.login(WD_NAME, WD_PW).then(res=>{
       this.emit('ready', res)
       winston.info(`Bot logged onto scp-tech-cn.`)
+      winston.info(`Bot login expires on ${this.tech.cookie.exp}.`)
       winston.info(`Bot is ready.`)
     }).catch(e=>{
       winston.error(e.message)
     })
+    this.tech._refresh = setInterval(()=>{
+      try {
+        if (this.tech.cookie.exp - Date.now() <= 2592000000) {
+          this.tech.login(WD_NAME, WD_PW).then(res=>{
+            winston.info(`Bot refreshed login status on scp-tech-cn.`)
+            winston.info(`Bot login expires on ${this.tech.cookie.exp}.`)
+          })
+        }
+      } catch (e) {
+        winston.error(e.message)
+      }
+    }, 864000000)
   }
 
   async getInfo(params) {

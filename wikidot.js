@@ -7,7 +7,8 @@ class WD {
     this.cookie = {
       auth: '',
       sess: '',
-      expire: null
+      expire: null,
+      exp: null
     };
   }
   wiki(base) {
@@ -52,6 +53,7 @@ class WD {
     let tmp = res.headers['set-cookie'][1].split("; ")
   	this.cookie.sess = tmp[0]
   	this.cookie.expire = tmp[1].split("=")[1]
+    this.cookie.exp = new Date(this.cookie.expire.split(",").pop().split("-").join(" "))
     this.cookie.auth = `${this.cookie.sess}; wikidot_udsession=1; `
     return this;
   }
