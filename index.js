@@ -83,7 +83,8 @@ if (config.LOG_FILE) {
 }
 
 let bot = new CNTech();
-bot.login(config.WD_NAME, config.WD_PW)
+bot.loginAll(config.WD_NAME, config.WD_PW)
+
 bot.on('ready', ()=>{
   bot.schedule = {
     outdate: setInterval(()=>{

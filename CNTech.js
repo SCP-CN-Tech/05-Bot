@@ -30,33 +30,43 @@ class CNTech extends EventEmitter {
     this.reserves = [];
     this.outdates = [];
   }
-  login(WD_NAME, WD_PW) {
-    this.tech.login(WD_NAME, WD_PW).then(res=>{
-      this.emit('ready', res)
-      winston.info(`Bot logged onto scp-tech-cn.`)
-      winston.info(`Bot login expires on ${this.tech.cookie.exp}.`)
+
+  loginAll(WD_NAME, WD_PW) {
+    let t = this.loginSite("tech", WD_NAME, WD_PW)
+    let c = this.loginSite("cn", WD_NAME, WD_PW)
+    Promise.all([t,c]).then(()=>{
+      this.emit('ready')
       winston.info(`Bot is ready.`)
     }).catch(e=>{
       winston.error(e.message)
     })
-    this.tech._refresh = setInterval(()=>{
+  }
+  loginSite(site, WD_NAME, WD_PW) {
+    let temp = this[site].login(WD_NAME, WD_PW)
+    temp.then(()=>{
+      winston.info(`Bot logged onto ${this[site].domain}.`)
+      winston.info(`${this[site].domain} login expires on ${this[site].cookie.exp}.`)
+    })
+    if (this[site]._refresh) { clearInterval(this[site]._refresh) }
+    this[site]._refresh = setInterval(()=>{
       try {
-        if (this.tech.cookie.exp - Date.now() <= 2592000000) {
-          this.tech.login(WD_NAME, WD_PW).then(res=>{
-            winston.info(`Bot refreshed login status on scp-tech-cn.`)
-            winston.info(`Bot login expires on ${this.tech.cookie.exp}.`)
+        if (this[site].cookie.exp - Date.now() <= 2592000000) {
+          this[site].login(WD_NAME, WD_PW).then(res=>{
+            winston.info(`Bot logged onto ${this[site].domain}.`)
+            winston.info(`${this[site].domain} login expires on ${this[site].cookie.exp}.`)
           })
         }
       } catch (e) {
         winston.error(e.message)
       }
     }, 864000000)
+    return temp
   }
 
   async getInfo(params) {
     let info = [];
     let cn = this.cn;
-    let res = await this.tech.module('list/ListPagesModule', Object.assign({
+    let res = await this.tech.listPages(Object.assign({
       category: "reserve",
       created_at: "older than 30 day",
       order: "created_at desc desc",
@@ -124,7 +134,7 @@ class CNTech extends EventEmitter {
         url: null,
         title: null,
       }
-      let pageinfo = await cn.module('list/ListPagesModule', {
+      let pageinfo = await cn.listPages({
         name: page.name,
         module_body: `[[table class="exist"]]
         [[row]]

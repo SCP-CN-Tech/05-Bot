@@ -12,6 +12,7 @@ class WD {
     };
   }
   wiki(base) {
+    this.domain = base;
     if (!base.startsWith("http")) { base = `http://${base}.wikidot.com` }
     this.base = base;
     this.ajax = `${base}/ajax-module-connector.php`;
@@ -75,7 +76,7 @@ class WD {
   	let info = await this.module("viewsource/ViewSourceModule", {
   		page_id: page_id
   	})
-  	return info.body
+  	return info
   }
 
   async edit(wiki_page, params) {
@@ -107,6 +108,16 @@ class WD {
       page_id: page_id,
       new_name: new_name,
     }, params))
+  }
+
+  async listPages(params) {
+    return await this.module('list/ListPagesModule', Object.assign({
+      category: ".",
+      order: "created_at desc desc",
+      perPage: "20",
+      separate: "true",
+      module_body: ``
+    }, params));
   }
 }
 module.exports = WD;
