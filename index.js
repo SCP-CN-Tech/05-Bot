@@ -86,9 +86,15 @@ let bot = new CNTech();
 bot.login(config.WD_NAME, config.WD_PW)
 bot.on('ready', ()=>{
   bot.schedule = {
-    outdate: setInterval(bot.outdate, 43200000),
-    remove: setInterval(bot.remove, 10800000),
-    expire: setInterval(bot.expire, 43200000),
+    outdate: setInterval(()=>{
+      return bot.outdate();
+    }, 43200000),
+    remove: setInterval(()=>{
+      return bot.remove();
+    }, 10800000),
+    expire: setInterval(()=>{
+      return bot.expire();
+    }, 43200000),
   }
   bot.outdate()
   bot.remove()

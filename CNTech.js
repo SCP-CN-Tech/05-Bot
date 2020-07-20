@@ -225,7 +225,7 @@ class CNTech extends EventEmitter {
       this.tech.delete(`outdate:${v.page.name}`).then(stat=>{
         if (stat.status==='ok') {
           winston.verbose(`Deleted "outdate:${v.page.name}"`)
-        } else winston.eror(`${stat.status}: ${stat.message}`)
+        } else winston.warn(`${stat.status}: ${stat.message}`)
       })
     })
   }
