@@ -131,8 +131,9 @@ class CNTech extends EventEmitter {
         url: null,
         title: null,
       }
+      temp = `${cat}${page.name}`
       let pageinfo = await cn.listPages({
-        name: `${cat}${page.name}`,
+        name: temp.length>60 ? temp.substring(0,60) : temp,
         module_body: `[[table class="exist"]]
         [[row]]
         [[cell]]
