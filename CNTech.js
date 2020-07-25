@@ -115,19 +115,16 @@ class CNTech extends EventEmitter {
         unixname: $(meta[1]).text().trim(),
         id: $(meta[2]).text().trim(),
       }
-      let a = $(meta[3]).text().trim()
-      if (parseInt(a)<0||parseInt(a)>=15) { a===null }
-      else { a=`http://${branch[a]}.wikidot.com/${$(meta[4]).text().trim()}` }
+      let temp = $(meta[3]).text().trim()
+      let cat = parseInt(temp)==0 ? "wanderers:" : ""
+      if (parseInt(temp)<0||parseInt(temp)>=15) { temp===null }
+      else { temp=`http://${branch[temp]}.wikidot.com/${$(meta[4]).text().trim()}` }
       let page = {
-        url: a,
+        url: temp,
         name: $(meta[4]).text().trim(),
         title: $(meta[5]).text().trim(),
       }
-      a = parseInt($(meta[6]).children('span').attr('class').split(' ')[1].substring(5)+'000')
-      let time = {
-        raw: a,
-        date: new Date(a),
-      }
+      let created = parseInt($(meta[6]).children('span').attr('class').split(' ')[1].substring(5)+'000')
       let trans = {
         exist: false,
         translator: null,
@@ -135,7 +132,7 @@ class CNTech extends EventEmitter {
         title: null,
       }
       let pageinfo = await cn.listPages({
-        name: page.name,
+        name: `${cat}${page.name}`,
         module_body: `[[table class="exist"]]
         [[row]]
         [[cell]]
@@ -153,6 +150,9 @@ class CNTech extends EventEmitter {
         [[cell]]
         %%title%%
         [[/cell]]
+        [[cell]]
+        %%created_at|%Y-%m-%d|hover%%
+        [[/cell]]
         [[/row]]
         [[/table]]`});
       meta = cheerio.load(pageinfo.body)('table.exist').find('td');
@@ -166,9 +166,10 @@ class CNTech extends EventEmitter {
           },
           url: $(meta[3]).text().trim(),
           title: $(meta[4]).text().trim(),
+          created: parseInt($(meta[5]).children('span').attr('class').split(' ')[1].substring(5)+'000'),
         }
       }
-      info.push({user:user, page:page, time:time, trans:trans});
+      info.push({user:user, page:page, created:created, trans:trans});
     };
     return info;
   }
@@ -180,7 +181,7 @@ class CNTech extends EventEmitter {
       created_at: "older than 30 day"
     })
     info.forEach(v=>{
-      if (v.trans.exist||v.time.raw<=now-7776000000) {
+      if (v.trans.exist && v.created<=v.trans.created || v.created<=now-7776000000) {
         this.tech.delete(`reserve:${v.page.name}`).then(stat=>{
           if (stat.status==='ok') {
             winston.verbose(`Deleted "reserve:${v.page.name}"`)
@@ -207,7 +208,7 @@ class CNTech extends EventEmitter {
       created_at: "older than 30 day"
     })
     info.forEach(v=>{
-      if (v.trans.exist) {
+      if (v.trans.exist && v.created<=v.trans.created) {
         this.tech.delete(`reserve:${v.page.name}`).then(stat=>{
           if (stat.status==='ok') {
             winston.verbose(`Deleted "reserve:${v.page.name}"`)

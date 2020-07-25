@@ -16,6 +16,7 @@ class WD {
     if (!base.startsWith("http")) { base = `http://${base}.wikidot.com` }
     this.base = base;
     this.ajax = `${base}/ajax-module-connector.php`;
+    this.quick = `${base}/quickmodule.php`;
     winston.debug(`Rebased to ${base}.`)
     return this;
   }
