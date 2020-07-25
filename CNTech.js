@@ -130,6 +130,7 @@ class CNTech extends EventEmitter {
         translator: null,
         url: null,
         title: null,
+        created: null,
       }
       temp = `${cat}${page.name}`
       let pageinfo = await cn.listPages({
@@ -187,14 +188,14 @@ class CNTech extends EventEmitter {
           if (stat.status==='ok') {
             winston.verbose(`Deleted "reserve:${v.page.name}"`)
           } else winston.warn(`${stat.status}: ${stat.message}`)
-        })
+        }).catch(e=>winston.error(e.message))
       }
       else {
         this.tech.rename(`reserve:${v.page.name}`, `outdate:${v.page.name}`).then(stat=>{
           if (stat.status==='ok') {
             winston.verbose(`Renamed "reserve:${v.page.name}" to "outdate:${v.page.name}"`)
           } else winston.warn(`${stat.status}: ${stat.message}`)
-        })
+        }).catch(e=>winston.error(e.message))
       }
     })
   }
@@ -214,7 +215,7 @@ class CNTech extends EventEmitter {
           if (stat.status==='ok') {
             winston.verbose(`Deleted "reserve:${v.page.name}"`)
           } else winston.warn(`${stat.status}: ${stat.message}`)
-        })
+        }).catch(e=>winston.error(e.message))
       }
     })
     info2.forEach(v=>{
@@ -223,7 +224,7 @@ class CNTech extends EventEmitter {
           if (stat.status==='ok') {
             winston.verbose(`Deleted "outdate:${v.page.name}"`)
           } else winston.warn(`${stat.status}: ${stat.message}`)
-        })
+        }).catch(e=>winston.error(e.message))
       }
     })
   }
@@ -238,7 +239,7 @@ class CNTech extends EventEmitter {
         if (stat.status==='ok') {
           winston.verbose(`Deleted "outdate:${v.page.name}"`)
         } else winston.warn(`${stat.status}: ${stat.message}`)
-      })
+      }).catch(e=>winston.error(e.message))
     })
   }
 

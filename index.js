@@ -88,21 +88,21 @@ bot.loginAll(config.WD_NAME, config.WD_PW)
 bot.on('ready', ()=>{
   bot.schedule = {
     outdate: setInterval(()=>{
-      return bot.outdate();
+      return bot.outdate().catch(e=>winston.error(e.message));
     }, 43200000),
     remove: setInterval(()=>{
-      return bot.remove();
+      return bot.remove().catch(e=>winston.error(e.message));
     }, 10800000),
     expire: setInterval(()=>{
-      return bot.expire();
+      return bot.expire().catch(e=>winston.error(e.message));
     }, 43200000),
   }
-  bot.outdate()
-  bot.remove()
-  bot.expire()
+  bot.outdate().catch(e=>winston.error(e.message));
+  bot.remove().catch(e=>winston.error(e.message));
+  bot.expire().catch(e=>winston.error(e.message));
   /*bot.debug().then(res=>{
     fs.writeFileSync('./trans-reserve.json', JSON.stringify(res, null, 2), 'utf8')
     //console.log(res)
     //console.log(`Retrieved ${res.length} records.`)
-  })*/
+  }).catch(e=>winston.error(e.message))*/
 })
