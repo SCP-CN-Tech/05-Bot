@@ -30,6 +30,12 @@ class WD {
     }).json();
   };
 
+  async quic(module, params) {
+    return await got.get(this.quick, {
+      searchParams: Object.assign({module: module}, params)
+    }).json();
+  }
+
   async module(moduleName, params) {
     return await this.req(Object.assign({moduleName: moduleName}, params))
   }
@@ -92,6 +98,28 @@ class WD {
       lock_secret: lock.lock_secret,
       revision_id: lock.page_revision_id||null,
     }, params))
+  }
+
+  async tags(wiki_page, params) {
+    let page_id = await this.getPageId(wiki_page);
+    let tags;
+    if (typeof params === "string") {
+      tags = params.split(" ");
+    } else if (params instanceof Array) {
+      tags = params;
+    } else if (params instanceof Object) {
+      tags = await this.module("pagetags/PageTagsModule", { pageId: page_id })
+      tags = cheerio.load(tags.body)(`input[id="page-tags-input"]`).attr("value").split(" ")
+      params.add = params.add instanceof Array ? params.add : (typeof params.add === "string" ? params.add.split(" ") : null)
+      params.remove = params.remove instanceof Array ? params.remove : (typeof params.remove === "string" ? params.remove.split(" ") : null)
+      tags = params.add ? tags.concat(params.add.filter(v=>!tags.includes(v))) : tags
+      tags = params.remove ? tags.filter(v=>!params.remove.includes(v)) : tags
+    }
+    return await this.action('WikiPageAction', {
+      event: 'saveTags',
+      pageId: page_id,
+      tags: tags.join(" "),
+    })
   }
 
   async delete(wiki_page, params) {

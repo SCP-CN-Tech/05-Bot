@@ -96,10 +96,14 @@ bot.on('ready', ()=>{
     expire: setInterval(()=>{
       return bot.expire().catch(e=>winston.error(e.message));
     }, 43200000),
+    untag: setInterval(()=>{
+      return bot.untag().catch(e=>winston.error(e.message));
+    }, 10800000),
   }
   bot.outdate().catch(e=>winston.error(e.message));
   bot.remove().catch(e=>winston.error(e.message));
   bot.expire().catch(e=>winston.error(e.message));
+  bot.untag().catch(e=>winston.error(e.message));
   /*bot.debug().then(res=>{
     fs.writeFileSync('./trans-reserve.json', JSON.stringify(res, null, 2), 'utf8')
     //console.log(res)

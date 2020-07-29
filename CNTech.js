@@ -20,6 +20,24 @@ const branch = {
   "14": "scp-cs",
   "15": ""
 }
+const branchId = {
+  "00": "146034",
+  "01": "66711",
+  "02": "1427610",
+  "03": "169125",
+  "04": "486864",
+  "05": "464696",
+  "06": "647733",
+  "07": "1968241",
+  "08": "547203",
+  "09": "578002",
+  "10": "1269857",
+  "11": "530167",
+  "12": "1398197",
+  "13": "783633",
+  "14": "2060442",
+  "15": "",
+}
 
 class CNTech extends EventEmitter {
   constructor() {
@@ -93,6 +111,9 @@ class CNTech extends EventEmitter {
       %%name%%
       [[/cell]]
       [[cell]]
+      %%fullname%%
+      [[/cell]]
+      [[cell]]
       %%title%%
       [[/cell]]
       [[cell]]
@@ -115,16 +136,20 @@ class CNTech extends EventEmitter {
         unixname: $(meta[1]).text().trim(),
         id: $(meta[2]).text().trim(),
       }
-      let temp = $(meta[3]).text().trim()
+      let temp = $(meta[3]).text().trim(), temp2 = null;
       let cat = parseInt(temp)==0 ? "wanderers:" : ""
       if (parseInt(temp)<0||parseInt(temp)>=15) { temp===null }
-      else { temp=`http://${branch[temp]}.wikidot.com/${$(meta[4]).text().trim()}` }
+      else { temp2=`http://${branch[temp]}.wikidot.com/${$(meta[4]).text().trim()}` }
+      temp = await cn.quic("PageLookupQModule", {s:branchId[temp], q:$(meta[4]).text().trim()})
+      temp = temp.pages.find(v=>v.unix_name === $(meta[4]).text().trim())
+      let rawname = $(meta[5]).text().trim()
       let page = {
-        url: temp,
+        exist: !!temp,
+        url: temp2,
         name: $(meta[4]).text().trim(),
-        title: $(meta[5]).text().trim(),
+        title: temp ? temp.title : $(meta[6]).text().trim(),
       }
-      let created = parseInt($(meta[6]).children('span').attr('class').split(' ')[1].substring(5)+'000')
+      let created = parseInt($(meta[7]).children('span').attr('class').split(' ')[1].substring(5)+'000')
       let trans = {
         exist: false,
         translator: null,
@@ -171,7 +196,7 @@ class CNTech extends EventEmitter {
           created: parseInt($(meta[5]).children('span').attr('class').split(' ')[1].substring(5)+'000'),
         }
       }
-      info.push({user:user, page:page, created:created, trans:trans});
+      info.push({user:user, page:page, created:created, trans:trans, rawname:rawname});
     };
     return info;
   }
@@ -184,16 +209,16 @@ class CNTech extends EventEmitter {
     })
     info.forEach(v=>{
       if (v.trans.exist && v.created<=v.trans.created || v.created<=now-7776000000) {
-        this.tech.delete(`reserve:${v.page.name}`).then(stat=>{
+        this.tech.delete(v.rawname).then(stat=>{
           if (stat.status==='ok') {
-            winston.verbose(`Deleted "reserve:${v.page.name}"`)
+            winston.verbose(`Deleted "${v.rawname}"`)
           } else winston.warn(`${stat.status}: ${stat.message}`)
         }).catch(e=>winston.error(e.message))
       }
       else {
-        this.tech.rename(`reserve:${v.page.name}`, `outdate:${v.page.name}`).then(stat=>{
+        this.tech.rename(v.rawname, `outdate:${v.page.name}`).then(stat=>{
           if (stat.status==='ok') {
-            winston.verbose(`Renamed "reserve:${v.page.name}" to "outdate:${v.page.name}"`)
+            winston.verbose(`Renamed "${v.rawname}" to "outdate:${v.page.name}"`)
           } else winston.warn(`${stat.status}: ${stat.message}`)
         }).catch(e=>winston.error(e.message))
       }
@@ -203,27 +228,47 @@ class CNTech extends EventEmitter {
   async remove() {
     let info = await this.getInfo({
       category: "reserve",
-      created_at: null
+      created_at: null,
+      tags: "-无原文",
     })
     let info2 = await this.getInfo({
       category: "outdate",
       created_at: "older than 30 day"
     })
     info.forEach(v=>{
-      if (v.trans.exist && v.created<=v.trans.created) {
-        this.tech.delete(`reserve:${v.page.name}`).then(stat=>{
+      if (!v.page.exist) {
+        this.tech.tags(v.rawname, {add: "无原文"}).then(stat=>{
           if (stat.status==='ok') {
-            winston.verbose(`Deleted "reserve:${v.page.name}"`)
+            winston.verbose(`No source article for "${v.rawname}"`)
           } else winston.warn(`${stat.status}: ${stat.message}`)
+        }).catch(e=>winston.error(e.message))
+      } else if (v.trans.exist && v.created<=v.trans.created) {
+        this.tech.tags(v.rawname, {add: "已翻译"}).then(stat=>{
+          if (stat.status!=='ok') { winston.warn(`${stat.status}: ${stat.message}`) }
         }).catch(e=>winston.error(e.message))
       }
     })
     info2.forEach(v=>{
-      if (v.trans.exist) {
-        this.tech.delete(`outdate:${v.page.name}`).then(stat=>{
+      if (!v.page.exist || v.trans.exist) {
+        this.tech.delete(v.rawname).then(stat=>{
           if (stat.status==='ok') {
-            winston.verbose(`Deleted "outdate:${v.page.name}"`)
+            winston.verbose(`Deleted "${v.rawname}"`)
           } else winston.warn(`${stat.status}: ${stat.message}`)
+        }).catch(e=>winston.error(e.message))
+      }
+    })
+  }
+
+  async untag() {
+    let info = await this.getInfo({
+      category: "reserve",
+      created_at: null,
+      tags: "+已翻译",
+    })
+    info.forEach(v=>{
+      if (!v.trans.exist) {
+        this.tech.tags(v.rawname, {remove: "已翻译"}).then(stat=>{
+          if (stat.status!=='ok') { winston.warn(`${stat.status}: ${stat.message}`) }
         }).catch(e=>winston.error(e.message))
       }
     })
@@ -235,9 +280,9 @@ class CNTech extends EventEmitter {
       created_at: "older than 90 day"
     })
     info.forEach(v=>{
-      this.tech.delete(`outdate:${v.page.name}`).then(stat=>{
+      this.tech.delete(`${v.rawname}`).then(stat=>{
         if (stat.status==='ok') {
-          winston.verbose(`Deleted "outdate:${v.page.name}"`)
+          winston.verbose(`Deleted "${v.rawname}"`)
         } else winston.warn(`${stat.status}: ${stat.message}`)
       }).catch(e=>winston.error(e.message))
     })
