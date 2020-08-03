@@ -233,17 +233,19 @@ class CNTech extends EventEmitter {
     })
     let info2 = await this.getInfo({
       category: "outdate",
-      created_at: "older than 30 day"
+      created_at: "older than 30 day",
+      tags: "-长网址",
     })
     info.forEach(v=>{
+      let tag = v.rawname.length>=55 ? ["长网址"] : [];
       if (!v.page.exist) {
-        this.tech.tags(v.rawname, {add: "无原文"}).then(stat=>{
-          if (stat.status==='ok') {
-            winston.verbose(`No source article for "${v.rawname}"`)
-          } else winston.warn(`${stat.status}: ${stat.message}`)
-        }).catch(e=>winston.error(e.message))
+        tag.push("无原文");
+        winston.verbose(`No source article for "${v.rawname}"`)
       } else if (v.trans.exist && v.created<=v.trans.created) {
-        this.tech.tags(v.rawname, {add: "已翻译"}).then(stat=>{
+        tag.push("已翻译")
+      }
+      if (tag.length) {
+        this.tech.tags(v.rawname, {add: tag}).then(stat=>{
           if (stat.status!=='ok') { winston.warn(`${stat.status}: ${stat.message}`) }
         }).catch(e=>winston.error(e.message))
       }
