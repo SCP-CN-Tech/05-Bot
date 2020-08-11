@@ -69,7 +69,7 @@ class WD {
   async getPageId(page) {
     let pg = await got.get(`${this.base}/${page}`).text()
   	pg = cheerio.load(pg)
-  	let page_id;
+  	let page_id = null;
   	pg(pg("head").children("script")
 				.filter((i,el)=>pg(el).html().includes("WIKIREQUEST"))).html()
 		    .replace(/WIKIREQUEST\.info\.pageId *?= *?(\d+);/g, (_, id)=>{
@@ -80,10 +80,19 @@ class WD {
 
   async source(wiki_page) {
     let page_id = await this.getPageId(wiki_page);
-  	let info = await this.module("viewsource/ViewSourceModule", {
+  	return await this.module("viewsource/ViewSourceModule", {
   		page_id: page_id
   	})
-  	return info
+  }
+
+  async history(wiki_page, params) {
+    let page_id = await this.getPageId(wiki_page);
+  	return await this.module("history/PageRevisionListModule", Object.assign({
+  		page_id: page_id,
+      page: 1,
+      perpage: 20,
+      options: `{"all":true}`
+  	}, params))
   }
 
   async edit(wiki_page, params) {

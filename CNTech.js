@@ -84,7 +84,8 @@ class CNTech extends EventEmitter {
   async getInfo(params) {
     let info = [];
     let cn = this.cn;
-    let res = await this.tech.listPages(Object.assign({
+    let tech = this.tech;
+    let res = await tech.listPages(Object.assign({
       category: "reserve",
       created_at: "older than 30 day",
       order: "created_at desc desc",
@@ -131,10 +132,16 @@ class CNTech extends EventEmitter {
     for (let i = 0; i < all.length; i++) {
       winston.debug(`Retreiving record ${i+1} of ${all.length}`)
       let meta = $(all[i]).children('td')
+      let rawname = $(meta[5]).text().trim()
       let user = {
         displayName: $(meta[0]).text().trim(),
-        unixname: $(meta[1]).text().trim(),
+        unixname: $(meta[0]).text().trim()==="(user deleted)" ? null : $(meta[1]).text().trim(),
         id: $(meta[2]).text().trim(),
+      }
+      if ($(meta[0]).text().trim()==="(user deleted)") {
+        let $ = await tech.history(rawname, {});
+        $ = cheerio.load($.body);
+        user.id = $("tbody").children("tr").last().find(`span[class="printuser deleted"]`).attr("data-id")
       }
       let temp = $(meta[3]).text().trim(), temp2 = null;
       let cat = parseInt(temp)==0 ? "wanderers:" : ""
@@ -142,7 +149,6 @@ class CNTech extends EventEmitter {
       else { temp2=`http://${branch[temp]}.wikidot.com/${$(meta[4]).text().trim()}` }
       temp = await cn.quic("PageLookupQModule", {s:branchId[temp], q:$(meta[4]).text().trim()})
       temp = temp.pages.find(v=>v.unix_name === $(meta[4]).text().trim())
-      let rawname = $(meta[5]).text().trim()
       let page = {
         exist: !!temp,
         url: temp2,
