@@ -145,12 +145,14 @@ class CNTech extends EventEmitter {
       }
       let temp = $(meta[3]).text().trim(), temp2 = null;
       let cat = parseInt(temp)==0 ? "wanderers:" : ""
-      if (parseInt(temp)<0||parseInt(temp)>=15) { temp===null }
-      else { temp2=`http://${branch[temp]}.wikidot.com/${$(meta[4]).text().trim()}` }
-      temp = await cn.quic("PageLookupQModule", {s:branchId[temp], q:$(meta[4]).text().trim()})
-      temp = temp.pages.find(v=>v.unix_name === $(meta[4]).text().trim())
+      if (parseInt(temp)<0||parseInt(temp)>=15) { temp = null }
+      else {
+        temp2=`http://${branch[temp]}.wikidot.com/${$(meta[4]).text().trim()}`
+        temp = await cn.quic("PageLookupQModule", {s:branchId[temp], q:$(meta[4]).text().trim()})
+        temp = temp.pages.find(v=>v.unix_name === $(meta[4]).text().trim())
+      }
       let page = {
-        exist: !!temp,
+        exist: temp2 ? !!temp : null,
         url: temp2,
         name: $(meta[4]).text().trim(),
         title: temp ? temp.title : $(meta[6]).text().trim(),
@@ -244,7 +246,7 @@ class CNTech extends EventEmitter {
     })
     info.forEach(v=>{
       let tag = v.rawname.length>=55 ? ["长网址"] : [];
-      if (!v.page.exist) {
+      if (v.page.exist === false) {
         tag.push("无原文");
         winston.verbose(`No source article for "${v.rawname}"`)
       } else if (v.trans.exist && v.created<=v.trans.created) {
