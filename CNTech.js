@@ -167,7 +167,8 @@ class CNTech extends EventEmitter {
       }
       temp = `${cat}${page.name}`
       let pageinfo = await cn.listPages({
-        name: temp.length>60 ? temp.substring(0,60) : temp,
+        category: '*',
+        fullname: temp.length>60 ? temp.substring(0,60) : temp,
         module_body: `[[table class="exist"]]
         [[row]]
         [[cell]]
@@ -301,6 +302,7 @@ class CNTech extends EventEmitter {
   async debug() {
     return await this.getInfo({
       created_at: null,
+      category: "outdate",
     })
   }
 }
