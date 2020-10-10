@@ -148,7 +148,7 @@ class CNTech extends EventEmitter {
       if (parseInt(temp)<0||parseInt(temp)>=15) { temp = null }
       else {
         temp2=`http://${branch[temp]}.wikidot.com/${$(meta[4]).text().trim()}`
-        temp = await cn.quic("PageLookupQModule", {s:branchId[temp], q:$(meta[4]).text().trim()})
+        temp = await cn.quick("PageLookupQModule", {s:branchId[temp], q:$(meta[4]).text().trim()})
         temp = temp.pages.find(v=>v.unix_name === $(meta[4]).text().trim())
       }
       let page = {
@@ -218,18 +218,30 @@ class CNTech extends EventEmitter {
     })
     info.forEach(v=>{
       if (v.trans.exist && v.created<=v.trans.created || v.created<=now-7776000000) {
-        this.tech.delete(v.rawname).then(stat=>{
-          if (stat.status==='ok') {
-            winston.verbose(`Deleted "${v.rawname}"`)
-          } else winston.warn(`${stat.status}: ${stat.message}`)
-        }).catch(e=>winston.error(e.message))
+        this.tech.delete(v.rawname).then(()=>{
+          winston.verbose(`Deleted "${v.rawname}"`);
+        }).catch(e=>{
+          winston.warn(`${e.name} at deleting "${v.rawname}": ${e.message}`);
+        })
       }
       else {
-        this.tech.rename(v.rawname, `outdate:${v.page.name}`).then(stat=>{
-          if (stat.status==='ok') {
-            winston.verbose(`Renamed "${v.rawname}" to "outdate:${v.page.name}"`)
-          } else winston.warn(`${stat.status}: ${stat.message}`)
-        }).catch(e=>winston.error(e.message))
+        this.tech.rename(v.rawname, `outdate:${v.page.name}`).then(()=>{
+          winston.verbose(`Renamed "${v.rawname}" to "outdate:${v.page.name}"`);
+        }).catch(e=>{
+          if (e.name==='page_exists') {
+            this.tech.delete(`outdate:${v.page.name}`).then(()=>{
+              winston.verbose(`Deleted "outdate:${v.page.name}"`);
+              this.tech.rename(v.rawname, `outdate:${v.page.name}`).then(()=>{
+                winston.verbose(`Renamed "${v.rawname}" to "outdate:${v.page.name}"`);
+              }).catch(e=>{
+                winston.warn(`${e.name} at renaming "${v.rawname}": ${e.message}`);
+              })
+            }).catch(e=>{
+              winston.warn(`${e.name} at deleting "${v.rawname}": ${e.message}`);
+            })
+          }
+          else winston.warn(`${e.name} at renaming "${v.rawname}": ${e.message}`);
+        })
       }
     })
   }
@@ -249,23 +261,23 @@ class CNTech extends EventEmitter {
       let tag = v.rawname.length>=55 ? ["长网址"] : [];
       if (v.page.exist === false) {
         tag.push("无原文");
-        winston.verbose(`No source article for "${v.rawname}"`)
+        winston.verbose(`No source article for "${v.rawname}"`);
       } else if (v.trans.exist && v.created<=v.trans.created) {
         tag.push("已翻译")
       }
       if (tag.length) {
-        this.tech.tags(v.rawname, {add: tag}).then(stat=>{
-          if (stat.status!=='ok') { winston.warn(`${stat.status}: ${stat.message}`) }
-        }).catch(e=>winston.error(e.message))
+        this.tech.tags(v.rawname, {add: tag}).catch(e=>{
+          winston.warn(`${e.name} at tagging "${v.rawname}": ${e.message}`);
+        })
       }
     })
     info2.forEach(v=>{
       if (!v.page.exist || v.trans.exist) {
-        this.tech.delete(v.rawname).then(stat=>{
-          if (stat.status==='ok') {
-            winston.verbose(`Deleted "${v.rawname}"`)
-          } else winston.warn(`${stat.status}: ${stat.message}`)
-        }).catch(e=>winston.error(e.message))
+        this.tech.delete(v.rawname).then(()=>{
+          winston.verbose(`Deleted "${v.rawname}"`);
+        }).catch(e=>{
+          winston.warn(`${e.name} at deleting "${v.rawname}": ${e.message}`);
+        })
       }
     })
   }
@@ -278,9 +290,9 @@ class CNTech extends EventEmitter {
     })
     info.forEach(v=>{
       if (!v.trans.exist) {
-        this.tech.tags(v.rawname, {remove: "已翻译"}).then(stat=>{
-          if (stat.status!=='ok') { winston.warn(`${stat.status}: ${stat.message}`) }
-        }).catch(e=>winston.error(e.message))
+        this.tech.tags(v.rawname, {remove: "已翻译"}).catch(e=>{
+          winston.warn(`${e.name} at tagging "${v.rawname}": ${e.message}`);
+        })
       }
     })
   }
@@ -291,11 +303,11 @@ class CNTech extends EventEmitter {
       created_at: "older than 90 day"
     })
     info.forEach(v=>{
-      this.tech.delete(`${v.rawname}`).then(stat=>{
-        if (stat.status==='ok') {
-          winston.verbose(`Deleted "${v.rawname}"`)
-        } else winston.warn(`${stat.status}: ${stat.message}`)
-      }).catch(e=>winston.error(e.message))
+      this.tech.delete(v.rawname).then(()=>{
+        winston.verbose(`Deleted "${v.rawname}"`);
+      }).catch(e=>{
+        winston.warn(`${e.name} at deleting "${v.rawname}": ${e.message}`);
+      })
     })
   }
 

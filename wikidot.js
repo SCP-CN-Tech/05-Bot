@@ -16,7 +16,7 @@ class WD {
     if (!base.startsWith("http")) { base = `http://${base}.wikidot.com` }
     this.base = base;
     this.ajax = `${base}/ajax-module-connector.php`;
-    this.quick = `${base}/quickmodule.php`;
+    this.quic = `${base}/quickmodule.php`;
     winston.debug(`Rebased to ${base}.`)
     return this;
   }
@@ -24,14 +24,19 @@ class WD {
 
   async req(params) {
     const wikidotToken7 = Math.random().toString(36).substring(4);
-    return await got.post(this.ajax, {
+    let ret = await got.post(this.ajax, {
       headers: {Cookie: `${this.cookie.auth}wikidot_token7=${wikidotToken7}`},
       form: Object.assign({wikidot_token7: wikidotToken7, callbackIndex: 0}, params)
     }).json();
+    if (ret.status!=="ok") {
+      let e = new Error(ret.message);
+      e.name = ret.status;
+      throw e;
+    } else return ret;
   };
 
-  async quic(module, params) {
-    return await got.get(this.quick, {
+  async quick(module, params) {
+    return await got.get(this.quic, {
       searchParams: Object.assign({module: module}, params)
     }).json();
   }
