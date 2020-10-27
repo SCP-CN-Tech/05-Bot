@@ -88,25 +88,25 @@ bot.loginAll(config.WD_NAME, config.WD_PW)
 bot.on('ready', ()=>{
   bot.schedule = {
     outdate: setInterval(()=>{
-      return bot.outdate().catch(e=>winston.error(e));
+      return bot.outdate().catch(e=>winston.error(e.stack));
     }, 43200000),
     remove: setInterval(()=>{
-      return bot.remove().catch(e=>winston.error(e));
+      return bot.remove().catch(e=>winston.error(e.stack));
     }, 10800000),
     expire: setInterval(()=>{
-      return bot.expire().catch(e=>winston.error(e));
+      return bot.expire().catch(e=>winston.error(e.stack));
     }, 43200000),
     untag: setInterval(()=>{
-      return bot.untag().catch(e=>winston.error(e));
+      return bot.untag().catch(e=>winston.error(e.stack));
     }, 10800000),
   }
-  bot.outdate().catch(e=>winston.error(e));
-  bot.remove().catch(e=>winston.error(e));
-  bot.expire().catch(e=>winston.error(e));
-  bot.untag().catch(e=>winston.error(e));
+  bot.outdate().catch(e=>winston.error(e.stack));
+  bot.remove().catch(e=>winston.error(e.stack));
+  bot.expire().catch(e=>winston.error(e.stack));
+  bot.untag().catch(e=>winston.error(e.stack));
   /*bot.debug().then(res=>{
     fs.writeFileSync('./trans-reserve.json', JSON.stringify(res, null, 2), 'utf8')
     //console.log(res)
     //console.log(`Retrieved ${res.length} records.`)
-  }).catch(e=>winston.error(e))*/
+  }).catch(e=>winston.error(e.stack))*/
 })
