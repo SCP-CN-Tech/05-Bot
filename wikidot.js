@@ -25,7 +25,11 @@ class WD {
   async req(params) {
     const wikidotToken7 = Math.random().toString(36).substring(4);
     let ret = await got.post(this.ajax, {
-      headers: {Cookie: `${this.cookie.auth}wikidot_token7=${wikidotToken7}`},
+      headers: {
+        'User-Agent': '05-B, B for Bot',
+        Referer: '05-B, B for Bot',
+        Cookie: `${this.cookie.auth}wikidot_token7=${wikidotToken7}`
+      },
       form: Object.assign({wikidot_token7: wikidotToken7, callbackIndex: 0}, params)
     }).json();
     if (ret.status!=="ok") {
