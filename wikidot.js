@@ -26,9 +26,9 @@ class WD {
     const wikidotToken7 = Math.random().toString(36).substring(4);
     let ret = await got.post(this.ajax, {
       headers: {
-        'User-Agent': '05-B, B for Bot',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0',
         Referer: '05-B, B for Bot',
-        Cookie: `${this.cookie.auth}wikidot_token7=${wikidotToken7}`
+        Cookie: `wikidot_token7=${wikidotToken7}; ${this.cookie.auth}`,
       },
       form: Object.assign({wikidot_token7: wikidotToken7, callbackIndex: 0}, params)
     }).json();
@@ -56,7 +56,11 @@ class WD {
   async login(username, password) {
     const wikidotToken7 = Math.random().toString(36).substring(4);
     let res = await got.post('https://www.wikidot.com/default--flow/login__LoginPopupScreen', {
-      headers: {Cookie: `wikidot_token7=${wikidotToken7}`},
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0',
+        Referer: '05-B, B for Bot',
+        Cookie: `wikidot_token7=${wikidotToken7};`,
+      },
       form: {
 				login: username,
 				password: password,
@@ -65,7 +69,7 @@ class WD {
         wikidot_token7: wikidotToken7,
         callbackIndex: 0
 			}
-			})
+		})
     if (res.body.includes("The login and password do not match.")) {throw new Error("Wikidot login and password do not match.")}
     let tmp = res.headers['set-cookie'][1].split("; ")
   	this.cookie.sess = tmp[0]
