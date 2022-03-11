@@ -1,6 +1,7 @@
 const got = require('got');
 const cheerio = require('cheerio');
 const winston = require('winston');
+const {progressAlert} = require('./util');
 class WD {
   constructor(base) {
     this.wiki(base);
@@ -35,6 +36,7 @@ class WD {
     if (ret.status!=="ok") {
       let e = new Error(ret.message);
       e.name = ret.status;
+      e.src = ret;
       throw e;
     } else return ret;
   };
@@ -80,32 +82,59 @@ class WD {
   }
 
   async getPageId(page) {
-    let pg = await got.get(`${this.base}/${page}`).text()
-  	pg = cheerio.load(pg)
+    let pg = await got.get((page.startsWith('http') ? page : `${this.base}/${page}`) + '/norender/true', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0',
+        Referer: '05-B, B for Bot',
+        Cookie: `${this.cookie.auth}`,
+      },
+      followRedirect: false
+    }).text();
+  	pg = cheerio.load(pg);
   	let page_id = null;
   	pg(pg("head").children("script")
-				.filter((i,el)=>pg(el).html().includes("WIKIREQUEST"))).html()
-		    .replace(/WIKIREQUEST\.info\.pageId *?= *?(\d+);/g, (_, id)=>{
+				.filter((_i,el)=>pg(el).html().includes("WIKIREQUEST"))).html()
+		    .replace(/WIKIREQUEST\.info\.pageId\s*=\s*(\d+)\s*;/g, (_, id)=>{
 			page_id = id
-		})
+		});
+    return page_id;
+  }
+  
+  async resolvePageId(page_or_id) {
+    let page_id;
+    if (typeof page_or_id == "string") {
+      page_id = await this.getPageId(page_or_id);
+    } else if (typeof page_or_id == "number") {
+      page_id = page_or_id;
+    } else throw new Error(`page_or_id requires a String or Number. Received ${typeof page_or_id}`);
     return page_id;
   }
 
-  async source(wiki_page) {
-    let page_id = await this.getPageId(wiki_page);
-  	return await this.module("viewsource/ViewSourceModule", {
-  		page_id: page_id
-  	})
+  async viewSource(page_or_id, params) {
+    let page_id = await this.resolvePageId(page_or_id);
+    let options = Object.assign({
+  		page_id: page_id,
+      raw: true,
+  	}, params);
+    if (!options.raw) delete options.raw;
+    return await this.module("viewsource/ViewSourceModule", options);
   }
 
-  async history(wiki_page, params) {
-    let page_id = await this.getPageId(wiki_page);
-  	return await this.module("history/PageRevisionListModule", Object.assign({
+  async source(page_or_id, params) {
+    let page_id = await this.resolvePageId(page_or_id);
+    return await this.module("edit/TemplateSourceModule", Object.assign({
+  		page_id: page_id,
+  	}, params));
+  }
+
+  async history(page_or_id, params) {
+    let page_id = await this.resolvePageId(page_or_id);
+    return await this.module("history/PageRevisionListModule", Object.assign({
   		page_id: page_id,
       page: 1,
       perpage: 20,
       options: `{"all":true}`
-  	}, params))
+  	}, params));
   }
 
   async edit(wiki_page, params) {
@@ -119,23 +148,23 @@ class WD {
       lock_id: lock.lock_id,
       lock_secret: lock.lock_secret,
       revision_id: lock.page_revision_id||null,
-    }, params))
+    }, params));
   }
 
-  async tags(wiki_page, params) {
-    let page_id = await this.getPageId(wiki_page);
+  async tags(page_or_id, params) {
+    let page_id = await this.resolvePageId(page_or_id);
     let tags;
     if (typeof params === "string") {
       tags = params.split(" ");
     } else if (params instanceof Array) {
       tags = params;
     } else if (params instanceof Object) {
-      tags = await this.module("pagetags/PageTagsModule", { pageId: page_id })
-      tags = cheerio.load(tags.body)(`input[id="page-tags-input"]`).attr("value").split(" ")
-      params.add = params.add instanceof Array ? params.add : (typeof params.add === "string" ? params.add.split(" ") : null)
-      params.remove = params.remove instanceof Array ? params.remove : (typeof params.remove === "string" ? params.remove.split(" ") : null)
-      tags = params.add ? tags.concat(params.add.filter(v=>!tags.includes(v))) : tags
-      tags = params.remove ? tags.filter(v=>!params.remove.includes(v)) : tags
+      tags = await this.module("pagetags/PageTagsModule", { pageId: page_id });
+      tags = cheerio.load(tags.body)(`input[id="page-tags-input"]`).attr("value").split(" ");
+      params.add = params.add instanceof Array ? params.add : (typeof params.add === "string" ? params.add.split(" ") : null);
+      params.remove = params.remove instanceof Array ? params.remove : (typeof params.remove === "string" ? params.remove.split(" ") : null);
+      tags = params.add ? tags.concat(params.add.filter(v=>!tags.includes(v))) : tags;
+      tags = params.remove ? tags.filter(v=>!params.remove.includes(v)) : tags;
     }
     return await this.action('WikiPageAction', {
       event: 'saveTags',
@@ -144,21 +173,21 @@ class WD {
     })
   }
 
-  async delete(wiki_page, params) {
-    let page_id = await this.getPageId(wiki_page);
+  async delete(page_or_id, params) {
+    let page_id = await this.resolvePageId(page_or_id);
     return await this.action('WikiPageAction', Object.assign({
       event: 'deletePage',
       page_id: page_id,
-    }, params))
+    }, params));
   }
 
-  async rename(wiki_page, new_name, params) {
-    let page_id = await this.getPageId(wiki_page);
+  async rename(page_or_id, new_name, params) {
+    let page_id = await this.resolvePageId(page_or_id);
     return await this.action('WikiPageAction', Object.assign({
       event: 'renamePage',
       page_id: page_id,
       new_name: new_name,
-    }, params))
+    }, params));
   }
 
   async listPages(params) {
@@ -169,6 +198,104 @@ class WD {
       separate: "true",
       module_body: ``
     }, params));
+  }
+
+  async countPages(params) {
+    let count = await this.module('list/CountPagesModule', Object.assign({
+      category: "*",
+      module_body: `%%total%%`,
+    }, params));
+    return parseInt(cheerio.load(count.body)("p").text());
+  }
+  
+  async listBacklinkRaw(page_or_id, params) {
+    let page_id = await this.resolvePageId(page_or_id);
+    return await this.module('backlinks/BacklinksModule', Object.assign({
+      page_id: `${page_id}`,
+    }, params));
+  }
+  
+  async listBacklink(page_or_id) {
+    let backlink = await this.listBacklinkRaw(page_or_id);
+    let $ = cheerio.load(backlink.body);
+    let backlinkList = $('h2:contains("[[include]]")').prev('ul');
+    let backlinkedPages = [], internalInclude = [], externalInclude = [];
+    if (backlinkList) {
+      backlinkList = backlinkList.children('li');
+      for (let i = 0; i < backlinkList.length; i++) {
+        let a = $(backlinkList[i]).children('a');
+        let rellink = a.attr('href').substring(1);
+        try {
+          let pageId = await this.getPageId(rellink);
+          backlinkedPages.push({
+            url: this.base + '/' + rellink,
+            pageId,
+            title: a.text().split(`(${rellink}`)[0].trim(),
+          });
+        } catch (e) {
+          winston.error(`Error while processing page :${this.domain}:${rellink}: ${e.stack}`);
+        } finally {
+          if (progressAlert(i)) {
+            winston.verbose(`[Backlinker] Processing backlinked page info: ${i}/${backlinkList.length}`);
+          }
+        }
+      }
+      winston.verbose(`[Backlinker] Processing backlinked page info: ${backlinkList.length}/${backlinkList.length}`);
+      winston.verbose(`[Backlinker] Backlinked page list constructed.`);
+    }
+    
+    
+    let includeList = $('h2:contains("[[include]]") + ul');
+    if (includeList) {
+      includeList = includeList.children('li');
+      for (let i = 0; i < includeList.length; i++) {
+        let a = $(includeList[i]).children('a');
+        let rellink = a.attr('href').substring(1);
+        try {
+          let pageId = await this.getPageId(rellink);
+          internalInclude.push({
+            url: this.base + '/' + rellink,
+            pageId,
+            title: a.text().split('(/')[0].trim(),
+          });
+        } catch (e) {
+          winston.error(`Error while processing page :${this.domain}:${rellink}: ${e.stack}`);
+        } finally {
+          if (progressAlert(i)) {
+            winston.verbose(`[Backlinker] Processing internal include info: ${i}/${includeList.length}`);
+          }
+        }
+      }
+      winston.verbose(`[Backlinker] Processing internal include info: ${includeList.length}/${includeList.length}`);
+      winston.verbose(`[Backlinker] Internal include list constructed.`);
+    }
+    
+    includeList = $('h2:contains("[[include]]") + ul + ul');
+    if (includeList) {
+      includeList = includeList.children('li');
+      for (let i = 0; i < includeList.length; i++) {
+        let a = $(includeList[i]).children('a');
+        let link = a.attr('href');
+        try {
+          let pageId = await this.getPageId(link)
+          externalInclude.push({
+            url: link,
+            pageId,
+            title: a.text().split('(http')[0].trim(),
+          });
+        } catch (e) {
+          winston.error(`Error while processing page ${link}: ${e.stack}`);
+        } finally {
+          if (progressAlert(i)) {
+            winston.verbose(`[Backlinker] Processing external include info: ${i}/${includeList.length}`);
+          }
+        }
+      }
+      winston.verbose(`[Backlinker] Processing external include info: ${includeList.length}/${includeList.length}`)
+      winston.verbose(`[Backlinker] External include list constructed.`)
+    }
+    
+    return {backlinkedPages, internalInclude,externalInclude};
   }
 }
 module.exports = WD;
