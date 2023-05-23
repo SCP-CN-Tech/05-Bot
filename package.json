@@ -8,15 +8,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Joch2520/05-Bot.git"
+    "url": "git+https://github.com/SCP-CN-Tech/05-Bot.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Joch2520/05-Bot/issues"
+    "url": "https://github.com/SCP-CN-Tech/05-Bot/issues"
   },
-  "homepage": "https://github.com/Joch2520/05-Bot#readme",
+  "homepage": "https://github.com/SCP-CN-Tech/05-Bot#readme",
   "dependencies": {
     "cheerio": "^1.0.0-rc.10",
     "got": "^11.5.0",

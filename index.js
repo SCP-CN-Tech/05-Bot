@@ -39,12 +39,15 @@ const config = {
   "WD_NAME": "",
   "WD_PW": "",
   "LOG_LVL": "info",
-  "LOG_FILE": ""
+  "LOG_FILE": "",
+  "ENABLE_ARCHIVER": false,
+  "ARCHIVER_API": "",
+  "ARCHIVER_TOKEN": "",
 }
 
 try {
   let customCnfg = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
-  for (var prop in customCnfg) {
+  for (let prop in customCnfg) {
     if (config.hasOwnProperty(prop) && customCnfg.hasOwnProperty(prop)) { config[prop] = customCnfg[prop] }
   }
 } catch (e) { if (['MODULE_NOT_FOUND', 'ENOENT'].includes(e.code)) {
@@ -56,6 +59,11 @@ if (process.env.O5B_WD_NAME && process.env.O5B_WD_NAME!==undefined) { config.WD_
 if (process.env.O5B_WD_PW && process.env.O5B_WD_PW!==undefined) { config.WD_PW = process.env.O5B_WD_PW };
 if (process.env.O5B_LOG_LVL && process.env.O5B_LOG_LVL!==undefined) { config.LOG_LVL = process.env.O5B_LOG_LVL };
 if (process.env.O5B_LOG_FILE && process.env.O5B_LOG_FILE!==undefined) { config.LOG_FILE = process.env.O5B_LOG_FILE };
+if (process.env.O5B_ENABLE_ARCHIVER && process.env.O5B_ENABLE_ARCHIVER!==undefined) {
+  config.ENABLE_ARCHIVER = `${process.env.O5B_ENABLE_ARCHIVER}`.trim().toLowerCase()!="false"
+};
+if (process.env.O5B_ARCHIVER_API && process.env.O5B_ARCHIVER_API!==undefined) { config.APIENDPOINT = process.env.O5B_ARCHIVER_API };
+if (process.env.O5B_ARCHIVER_TOKEN && process.env.O5B_ARCHIVER_TOKEN!==undefined) { config.ARCHIVER_TOKEN = process.env.O5B_ARCHIVER_TOKEN };
 
 if(!config.WD_NAME||!config.WD_PW) {
   winston.error('Wikidot login details are required.');
@@ -99,11 +107,17 @@ bot.on('ready', ()=>{
     untag: setInterval(()=>{
       return bot.untag().catch(e=>winston.error(e.stack));
     }, 10800000),
+    archive: setInterval(()=>{
+      return bot.updateArchive(config.ARCHIVER_API, config.ARCHIVER_TOKEN).catch(e=>winston.error(e.stack));
+    }, 10800000),
   }
   bot.outdate().catch(e=>winston.error(e.stack));
   bot.remove().catch(e=>winston.error(e.stack));
   bot.expire().catch(e=>winston.error(e.stack));
   bot.untag().catch(e=>winston.error(e.stack));
+  if (config.ENABLE_ARCHIVER) {
+    bot.updateArchive(config.ARCHIVER_API, config.ARCHIVER_TOKEN).catch(e=>winston.error(e.stack));
+  }
   /*bot.debug().then(res=>{
     fs.writeFileSync('./trans-reserve.json', JSON.stringify(res, null, 2), 'utf8')
     //console.log(res)

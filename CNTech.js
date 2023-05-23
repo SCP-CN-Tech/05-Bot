@@ -85,6 +85,9 @@ class CNTech extends EventEmitter {
       [[cell]]
       %%created_at|%Y-%m-%d|hover%%
       [[/cell]]
+      [[cell]]
+      %%form_raw{page}%%
+      [[/cell]]
       [[/row]]
       [[/body]]
       [[foot]]
@@ -109,17 +112,19 @@ class CNTech extends EventEmitter {
         user.id = $("tbody").children("tr").last().find(`span[class="printuser deleted"]`).attr("data-id")
       }
       let temp = $(meta[3]).text().trim(), temp2 = null;
-      let cat = parseInt(temp)==0 ? "wanderers:" : ""
+      let cat = parseInt(temp)==0 ? "wanderers:" : "";
+      let temp3 = rawname.length >= 55 && $(meta[8]).text().trim().length ? $(meta[8]).text().trim() : $(meta[4]).text().trim();
       if (parseInt(temp)<0||parseInt(temp)>=15) { temp = null }
       else {
-        temp2=`http://${branch[temp]}.wikidot.com/${$(meta[4]).text().trim()}`
-        temp = await cn.quick("PageLookupQModule", {s:branchId[temp], q:$(meta[4]).text().trim()})
-        temp = temp.pages.find(v=>v.unix_name === $(meta[4]).text().trim())
+        temp2=`http://${branch[temp]}.wikidot.com`;
+        temp = await cn.quick("PageLookupQModule", {s:branchId[temp], q:temp3});
+        temp = temp.pages.find(v=>v.unix_name === temp3);
       }
       let page = {
         exist: temp2 ? !!temp : null,
-        url: temp2,
-        name: $(meta[4]).text().trim(),
+        originWiki: temp2,
+        url: `${temp2}/${temp3}`,
+        name: temp3,
         title: temp ? temp.title : $(meta[6]).text().trim(),
       }
       let created = parseInt($(meta[7]).children('span').attr('class').split(' ')[1].substring(5)+'000')
@@ -276,6 +281,33 @@ class CNTech extends EventEmitter {
     })
   }
 
+  async updateArchive(apiEndpoint, token) {
+    let info = await getInfo({
+      category: "reserve outdate",
+      created_at: null,
+    });
+    let res = await got.post(apiEndpoint, {
+      json: {
+        token,
+        data: info.map(v=>{
+          return {
+            user: v.user.displayName,
+            userWikidotId: parseInt(v.user.id),
+            wikipage: v.page.name,
+            originWiki: v.page.originWiki,
+            title: v.page.title,
+            date: v.created,
+          }
+        })
+      },
+    }).json();
+    if (res.status == "ok") {
+      winston.info(`[Archiver] updated archive.`);
+    } else {
+      winston.error(`[Archiver] ${res.error}: ${res.message}`);
+    }
+  }
+  
   async debug() {
     return await this.getInfo({
       created_at: null,
