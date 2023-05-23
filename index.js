@@ -62,7 +62,7 @@ if (process.env.O5B_LOG_FILE && process.env.O5B_LOG_FILE!==undefined) { config.L
 if (process.env.O5B_ENABLE_ARCHIVER && process.env.O5B_ENABLE_ARCHIVER!==undefined) {
   config.ENABLE_ARCHIVER = `${process.env.O5B_ENABLE_ARCHIVER}`.trim().toLowerCase()!="false"
 };
-if (process.env.O5B_ARCHIVER_API && process.env.O5B_ARCHIVER_API!==undefined) { config.APIENDPOINT = process.env.O5B_ARCHIVER_API };
+if (process.env.O5B_ARCHIVER_API && process.env.O5B_ARCHIVER_API!==undefined) { config.ARCHIVER_API = process.env.O5B_ARCHIVER_API };
 if (process.env.O5B_ARCHIVER_TOKEN && process.env.O5B_ARCHIVER_TOKEN!==undefined) { config.ARCHIVER_TOKEN = process.env.O5B_ARCHIVER_TOKEN };
 
 if(!config.WD_NAME||!config.WD_PW) {

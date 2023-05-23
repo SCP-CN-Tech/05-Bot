@@ -1,4 +1,5 @@
 const cheerio = require('cheerio');
+const got = require('got');
 const WD = require('./wikidot.js');
 const EventEmitter = require('events');
 const winston = require('winston');
@@ -282,7 +283,7 @@ class CNTech extends EventEmitter {
   }
 
   async updateArchive(apiEndpoint, token) {
-    let info = await getInfo({
+    let info = await this.getInfo({
       category: "reserve outdate",
       created_at: null,
     });
@@ -302,7 +303,7 @@ class CNTech extends EventEmitter {
       },
     }).json();
     if (res.status == "ok") {
-      winston.info(`[Archiver] updated archive.`);
+      winston.verbose(`[Archiver] updated archive.`);
     } else {
       winston.error(`[Archiver] ${res.error}: ${res.message}`);
     }
