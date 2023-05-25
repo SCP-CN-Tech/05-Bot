@@ -298,6 +298,7 @@ class CNTech extends EventEmitter {
             originWiki: v.page.originWiki,
             title: v.page.title,
             date: v.created,
+            expired: v.rawname.startsWith("outdate"),
           }
         })
       },
