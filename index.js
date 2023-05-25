@@ -60,7 +60,7 @@ if (process.env.O5B_WD_PW && process.env.O5B_WD_PW!==undefined) { config.WD_PW =
 if (process.env.O5B_LOG_LVL && process.env.O5B_LOG_LVL!==undefined) { config.LOG_LVL = process.env.O5B_LOG_LVL };
 if (process.env.O5B_LOG_FILE && process.env.O5B_LOG_FILE!==undefined) { config.LOG_FILE = process.env.O5B_LOG_FILE };
 if (process.env.O5B_ENABLE_ARCHIVER && process.env.O5B_ENABLE_ARCHIVER!==undefined) {
-  config.ENABLE_ARCHIVER = `${process.env.O5B_ENABLE_ARCHIVER}`.trim().toLowerCase()!="false"
+  config.ENABLE_ARCHIVER = `${process.env.O5B_ENABLE_ARCHIVER}`.trim().toLowerCase()==="true"
 };
 if (process.env.O5B_ARCHIVER_API && process.env.O5B_ARCHIVER_API!==undefined) { config.ARCHIVER_API = process.env.O5B_ARCHIVER_API };
 if (process.env.O5B_ARCHIVER_TOKEN && process.env.O5B_ARCHIVER_TOKEN!==undefined) { config.ARCHIVER_TOKEN = process.env.O5B_ARCHIVER_TOKEN };
@@ -119,7 +119,7 @@ bot.on('ready', ()=>{
     bot.updateArchive(config.ARCHIVER_API, config.ARCHIVER_TOKEN).catch(e=>winston.error(e.stack));
   }
   /*bot.debug().then(res=>{
-    fs.writeFileSync('./trans-reserve.json', JSON.stringify(res, null, 2), 'utf8')
+    fs.writeFileSync('./data/trans-reserve.json', JSON.stringify(res, null, 2), 'utf8')
     //console.log(res)
     //console.log(`Retrieved ${res.length} records.`)
   }).catch(e=>winston.error(e.stack))*/
