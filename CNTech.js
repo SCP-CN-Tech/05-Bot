@@ -20,24 +20,24 @@ class CNTech extends EventEmitter {
     let c = this.loginSite("cn", WD_NAME, WD_PW)
     Promise.all([t,c]).then(()=>{
       this.emit('ready')
-      winston.info(`Bot is ready.`)
+      winston.info(`[CN-Tech] Bot is ready.`)
     }).catch(e=>{
-      winston.error(e.message)
+      winston.error(`[CN-Tech] ${e.message}`)
     })
   }
   loginSite(site, WD_NAME, WD_PW) {
     let temp = this[site].login(WD_NAME, WD_PW)
     temp.then(()=>{
-      winston.info(`Bot logged onto ${this[site].domain}.`)
-      winston.info(`${this[site].domain} login expires on ${this[site].cookie.exp}.`)
+      winston.info(`[CN-Tech] Bot logged onto ${this[site].domain}.`)
+      winston.info(`[CN-Tech] ${this[site].domain} login expires on ${this[site].cookie.exp}.`)
     })
     if (this[site]._refresh) { clearInterval(this[site]._refresh) }
     this[site]._refresh = setInterval(()=>{
       try {
         if (this[site].cookie.exp - Date.now() <= 2592000000) {
           this[site].login(WD_NAME, WD_PW).then(res=>{
-            winston.info(`Bot logged onto ${this[site].domain}.`)
-            winston.info(`${this[site].domain} login expires on ${this[site].cookie.exp}.`)
+            winston.info(`[CN-Tech] Bot logged onto ${this[site].domain}.`)
+            winston.info(`[CN-Tech] ${this[site].domain} login expires on ${this[site].cookie.exp}.`)
           })
         }
       } catch (e) {
@@ -99,7 +99,7 @@ class CNTech extends EventEmitter {
     //console.log(res.body)
     let all = $('table').find('tr');
     for (let i = 0; i < all.length; i++) {
-      winston.debug(`Retreiving record ${i+1} of ${all.length}`)
+      winston.debug(`[Transres] Retreiving record ${i+1} of ${all.length}`)
       let meta = $(all[i]).children('td')
       let rawname = $(meta[5]).text().trim()
       let user = {
@@ -190,28 +190,28 @@ class CNTech extends EventEmitter {
     info.forEach(v=>{
       if (v.trans.exist && v.created<=v.trans.created || v.created<=now-7776000000) {
         this.tech.delete(v.rawname).then(()=>{
-          winston.verbose(`Deleted "${v.rawname}"`);
+          winston.verbose(`[Transres] Deleted "${v.rawname}"`);
         }).catch(e=>{
-          winston.warn(`${e.name} at deleting "${v.rawname}": ${e.message}`);
+          winston.warn(`[Transres] ${e.name} at deleting "${v.rawname}": ${e.message}`);
         })
       }
       else {
         this.tech.rename(v.rawname, `outdate:${v.page.name}`).then(()=>{
-          winston.verbose(`Renamed "${v.rawname}" to "outdate:${v.page.name}"`);
+          winston.verbose(`[Transres] Renamed "${v.rawname}" to "outdate:${v.page.name}"`);
         }).catch(e=>{
           if (e.name==='page_exists') {
             this.tech.delete(`outdate:${v.page.name}`).then(()=>{
-              winston.verbose(`Deleted "outdate:${v.page.name}"`);
+              winston.verbose(`[Transres] Deleted "outdate:${v.page.name}"`);
               this.tech.rename(v.rawname, `outdate:${v.page.name}`).then(()=>{
-                winston.verbose(`Renamed "${v.rawname}" to "outdate:${v.page.name}"`);
+                winston.verbose(`[Transres] Renamed "${v.rawname}" to "outdate:${v.page.name}"`);
               }).catch(e=>{
-                winston.warn(`${e.name} at renaming "${v.rawname}": ${e.message}`);
+                winston.warn(`[Transres] ${e.name} at renaming "${v.rawname}": ${e.message}`);
               })
             }).catch(e=>{
-              winston.warn(`${e.name} at deleting "${v.rawname}": ${e.message}`);
+              winston.warn(`[Transres] ${e.name} at deleting "${v.rawname}": ${e.message}`);
             })
           }
-          else winston.warn(`${e.name} at renaming "${v.rawname}": ${e.message}`);
+          else winston.warn(`[Transres] ${e.name} at renaming "${v.rawname}": ${e.message}`);
         })
       }
     })
@@ -232,22 +232,22 @@ class CNTech extends EventEmitter {
       let tag = v.rawname.length>=55 ? ["长网址"] : [];
       if (v.page.exist === false) {
         tag.push("无原文");
-        winston.verbose(`No source article for "${v.rawname}"`);
+        winston.verbose(`[Transres] No source article for "${v.rawname}"`);
       } else if (v.trans.exist && v.created<=v.trans.created) {
         tag.push("已翻译")
       }
       if (tag.length) {
         this.tech.tags(v.rawname, {add: tag}).catch(e=>{
-          winston.warn(`${e.name} at tagging "${v.rawname}": ${e.message}`);
+          winston.warn(`[Transres] ${e.name} at tagging "${v.rawname}": ${e.message}`);
         })
       }
     })
     info2.forEach(v=>{
       if (!v.page.exist || v.trans.exist) {
         this.tech.delete(v.rawname).then(()=>{
-          winston.verbose(`Deleted "${v.rawname}"`);
+          winston.verbose(`[Transres] Deleted "${v.rawname}"`);
         }).catch(e=>{
-          winston.warn(`${e.name} at deleting "${v.rawname}": ${e.message}`);
+          winston.warn(`[Transres] ${e.name} at deleting "${v.rawname}": ${e.message}`);
         })
       }
     })
@@ -262,7 +262,7 @@ class CNTech extends EventEmitter {
     info.forEach(v=>{
       if (!v.trans.exist) {
         this.tech.tags(v.rawname, {remove: "已翻译"}).catch(e=>{
-          winston.warn(`${e.name} at tagging "${v.rawname}": ${e.message}`);
+          winston.warn(`[Transres] ${e.name} at tagging "${v.rawname}": ${e.message}`);
         })
       }
     })
@@ -275,9 +275,9 @@ class CNTech extends EventEmitter {
     })
     info.forEach(v=>{
       this.tech.delete(v.rawname).then(()=>{
-        winston.verbose(`Deleted "${v.rawname}"`);
+        winston.verbose(`[Transres] Deleted "${v.rawname}"`);
       }).catch(e=>{
-        winston.warn(`${e.name} at deleting "${v.rawname}": ${e.message}`);
+        winston.warn(`[Transres] ${e.name} at deleting "${v.rawname}": ${e.message}`);
       })
     })
   }
