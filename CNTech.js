@@ -124,7 +124,7 @@ class CNTech extends EventEmitter {
       let page = {
         exist: temp2 ? !!temp : null,
         originWiki: temp2,
-        url: `${temp2}/${temp3}`,
+        url: temp2 ? `${temp2}/${temp3}` : temp3,
         name: temp3,
         title: temp ? temp.title : $(meta[6]).text().trim(),
       }
@@ -176,7 +176,7 @@ class CNTech extends EventEmitter {
           created: parseInt($(meta[5]).children('span').attr('class').split(' ')[1].substring(5)+'000'),
         }
       }
-      info.push({user:user, page:page, created:created, trans:trans, rawname:rawname});
+      info.push({user, page, created, trans, rawname});
     };
     return info;
   }
