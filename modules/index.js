@@ -1,8 +1,10 @@
 let Transres = require("./transres");
+let TinyArticles = require("./tinyarticles");
 
 function loadModules() {
   let moduleList = [
     Transres,
+    TinyArticles,
   ];
 
   let modules = {};
