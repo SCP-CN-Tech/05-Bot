@@ -6,6 +6,7 @@ let AntiSpam = require("./antispam");
 let TagUpdate = require("./tagupdate");
 let ComponentUpdate = require("./componentupdate");
 let UncommonTags = require("./uncommontags");
+let OrphanedFragments = require("./orphanedfragments");
 
 function loadModules() {
   let moduleList = [
@@ -17,6 +18,7 @@ function loadModules() {
     TagUpdate,
     ComponentUpdate,
     UncommonTags,
+    OrphanedFragments,
   ];
 
   let modules = {};
