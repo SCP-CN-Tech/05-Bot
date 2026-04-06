@@ -2,7 +2,7 @@ let BaseModule = require("./base");
 const got = require('got');
 const cheerio = require('cheerio');
 const winston = require('winston');
-const { branch, branchId, progressAlert, parseTime } = require('../util');
+const { branch, branchId, progressAlert, parseTime, delayMs } = require('../util');
 
 /**
  * Module that handles translation reservation.
@@ -81,7 +81,7 @@ class TransResModule extends BaseModule {
     //console.log(res.body)
     let all = $('table').find('tr');
     for (let i = 0; i < all.length; i++) {
-      winston.debug(`[Transres] Retreiving record ${i+1} of ${all.length}`)
+      winston.debug(`[Transres] Retrieving record ${i+1} of ${all.length}`)
       let meta = $(all[i]).children('td')
       let rawname = $(meta[5]).text().trim()
       let user = {
@@ -91,6 +91,7 @@ class TransResModule extends BaseModule {
       }
       // extract user id if user is deleted
       if ($(meta[0]).text().trim()==="(user deleted)") {
+        await delayMs(this.delayMs);
         let $ = await this.reserveSite.history(rawname, {});
         $ = cheerio.load($.body);
         user.id = $("tbody").children("tr").last().find(`span[class="printuser deleted"]`).attr("data-id")
@@ -102,6 +103,7 @@ class TransResModule extends BaseModule {
       if (parseInt(temp)<0||parseInt(temp)>=15) { temp = null }
       else {
         temp2=`http://${branch[temp]}.wikidot.com`;
+        await delayMs(this.delayMs);
         temp = await this.translateSite.quick("PageLookupQModule", {s:branchId[temp], q:temp3});
         temp = temp.pages.find(v=>v.unix_name === temp3);
       }
@@ -122,6 +124,7 @@ class TransResModule extends BaseModule {
       }
       // handle wanderers library category stripping
       temp = `${cat}${page.name.startsWith("wanderers:") ? page.name.replace("wanderers:","") : page.name}`
+      await delayMs(this.delayMs);
       let pageinfo = await this.translateSite.listPages({
         category: '*',
         fullname: temp.length>60 ? temp.substring(0,60) : temp,
@@ -172,7 +175,7 @@ class TransResModule extends BaseModule {
       category: "reserve",
       created_at: "older than 30 day"
     })
-    info.forEach(v=>{
+    for (const v of info) {
       if (v.trans.exist && v.created<=v.trans.created || v.created<=now-7776000000) {
         this.reserveSite.delete(v.rawname).then(()=>{
           winston.verbose(`[Transres] Deleted "${v.rawname}"`);
@@ -181,25 +184,32 @@ class TransResModule extends BaseModule {
         })
       }
       else {
-        this.reserveSite.rename(v.rawname, `outdate:${v.page.name}`).then(()=>{
+        try {
+          await this.reserveSite.rename(v.rawname, `outdate:${v.page.name}`);
           winston.verbose(`[Transres] Renamed "${v.rawname}" to "outdate:${v.page.name}"`);
-        }).catch(e=>{
+        } catch (e) {
           if (e.name==='page_exists') {
-            this.reserveSite.delete(`outdate:${v.page.name}`).then(()=>{
+            try {
+              await this.reserveSite.delete(`outdate:${v.page.name}`);
               winston.verbose(`[Transres] Deleted "outdate:${v.page.name}"`);
-              this.reserveSite.rename(v.rawname, `outdate:${v.page.name}`).then(()=>{
+              await delayMs(this.delayMs);
+              try {
+                await this.reserveSite.rename(v.rawname, `outdate:${v.page.name}`);
                 winston.verbose(`[Transres] Renamed "${v.rawname}" to "outdate:${v.page.name}"`);
-              }).catch(e=>{
+              } catch (e) {
                 winston.warn(`[Transres] ${e.name} at renaming "${v.rawname}": ${e.message}`);
-              })
-            }).catch(e=>{
+              }
+              await delayMs(this.delayMs);
+            } catch (e) {
               winston.warn(`[Transres] ${e.name} at deleting "${v.rawname}": ${e.message}`);
-            })
+            }
+            await delayMs(this.delayMs);
           }
           else winston.warn(`[Transres] ${e.name} at renaming "${v.rawname}": ${e.message}`);
-        })
+        }
+        await delayMs(this.delayMs);
       }
-    })
+    }
   }
 
   async remove() {
@@ -213,7 +223,7 @@ class TransResModule extends BaseModule {
       created_at: "older than 30 day",
       tags: "-长网址",
     })
-    info.forEach(v=>{
+    for (let v of info) {
       let tag = v.rawname.length>=55 ? ["长网址"] : [];
       if (v.page.exist === false) {
         tag.push("无原文");
@@ -222,20 +232,25 @@ class TransResModule extends BaseModule {
         tag.push("已翻译")
       }
       if (tag.length) {
-        this.reserveSite.tags(v.rawname, {add: tag}).catch(e=>{
+        try {
+          await this.reserveSite.tags(v.rawname, {add: tag});
+        } catch (e) {
           winston.warn(`[Transres] ${e.name} at tagging "${v.rawname}": ${e.message}`);
-        })
+        }
+        await delayMs(this.delayMs);
       }
-    })
-    info2.forEach(v=>{
+    }
+    for (let v of info2) {
       if (!v.page.exist || v.trans.exist) {
-        this.reserveSite.delete(v.rawname).then(()=>{
+        try {
+          await this.reserveSite.delete(v.rawname);
           winston.verbose(`[Transres] Deleted "${v.rawname}"`);
-        }).catch(e=>{
+        } catch (e) {
           winston.warn(`[Transres] ${e.name} at deleting "${v.rawname}": ${e.message}`);
-        })
+        }
+        await delayMs(this.delayMs);
       }
-    })
+    }
   }
 
   async untag() {
@@ -244,13 +259,14 @@ class TransResModule extends BaseModule {
       created_at: null,
       tags: "+已翻译",
     })
-    info.forEach(v=>{
+    for (let v of info) {
       if (!v.trans.exist) {
         this.reserveSite.tags(v.rawname, {remove: "已翻译"}).catch(e=>{
           winston.warn(`[Transres] ${e.name} at tagging "${v.rawname}": ${e.message}`);
-        })
+        });
+        await delayMs(this.delayMs);
       }
-    })
+    }
   }
 
   async expire() {
@@ -258,13 +274,14 @@ class TransResModule extends BaseModule {
       category: "outdate",
       created_at: "older than 90 day"
     })
-    info.forEach(v=>{
+    for (let v of info) {
       this.reserveSite.delete(v.rawname).then(()=>{
         winston.verbose(`[Transres] Deleted "${v.rawname}"`);
       }).catch(e=>{
         winston.warn(`[Transres] ${e.name} at deleting "${v.rawname}": ${e.message}`);
-      })
-    })
+      });
+      await delayMs(this.delayMs);
+    }
   }
 
   async updateArchive(apiEndpoint, token) {

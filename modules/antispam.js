@@ -64,6 +64,7 @@ class AntiSpamModule extends BaseModule {
       if (progressAlert(i)) {
         winston.info(`[AntiSpam] Batch delete progress: ${i}/${delList.length}`)
       }
+      await delayMs(this.delayMs);
     }
     winston.info(`[AntiSpam] Delete progress: ${delList.length}/${delList.length}`)
     winston.info(`[AntiSpam] Batch delete completed.`)

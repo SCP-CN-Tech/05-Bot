@@ -2,6 +2,7 @@ let BaseModule = require("./base");
 const fs = require("fs");
 const cheerio = require('cheerio');
 const winston = require('winston');
+const { delayMs } = require("../util");
 
 /**
  * Module that handles mass revision rollbacks.
@@ -28,8 +29,9 @@ class UndoerModule extends BaseModule {
       let url = $(list[i]).find('td.title > a').attr('href');
       let rev = $(list[i]).find('td.revision-no').text().trim();
       rev = parseInt(rev.substring(6, rev.length-1)) ?? 0;
-      let id = parseInt(await this.site.base.getPageId(url.split('/').pop()));
-      let latestRev = parseInt(cheerio.load((await this.site.base.listPages({
+      let id = parseInt(await this.site.getPageId(url.split('/').pop()));
+      await delayMs(this.delayMs);
+      let latestRev = parseInt(cheerio.load((await this.site.listPages({
         category: '*',
         fullname: url.split('/').pop(),
         module_body: `%%revisions%%`,
@@ -89,6 +91,7 @@ class UndoerModule extends BaseModule {
       if (progressAlert(i)) {
         winston.info(`[Undoer] Batch revert progress: ${i}/${undoList.length}`)
       }
+      await delayMs(this.delayMs);
     }
     winston.info(`[Undoer] Revert progress: ${undoList.length}/${undoList.length}`)
     winston.info(`[Undoer] Batch revert completed.`)

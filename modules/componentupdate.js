@@ -21,6 +21,7 @@ class ComponentUpdateModule extends BaseModule {
     for (let i = 0; i < list.length; i++) {
       let name = list[i].url.split('/').pop();
       let source = (await this.site.source(parseInt(list[i].pageId))).body;
+      await delayMs(this.delayMs);
       // if (component.test(source)) {
         try {
           winston.verbose(`[Component updater] Updating page ${name}`);
@@ -37,7 +38,7 @@ class ComponentUpdateModule extends BaseModule {
       if (progressAlert(i)) {
         winston.info(`[Component updater] Updating component usage: ${i}/${list.length}`)
       }
-      await (new Promise((resolve)=>{ setTimeout(()=>{ resolve() }, 3000)}));
+      await delayMs(this.delayMs);
     }
     winston.info(`[Component updater] Updating component usage: ${list.length}/${list.length}`)
     winston.info(`[Component updater] Component usage update completed.`)

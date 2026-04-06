@@ -6,6 +6,8 @@
 class BaseModule {
   static id = "base";
   schedule = {};
+  /** Delay between each wikidot request */
+  delayMs = 1000;
 
   constructor(config) {
     this.config = config;

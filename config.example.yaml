@@ -1,10 +1,10 @@
-logLevel: debug
+logLevel: verbose
 logFile: null
 
 wikidot:
   username: ""
   password: ""
-  delayMs: 1000
+  delayMs: 1000                                           # Delay between each subsequent wikidot request, for rate limit
   sites:
     - name: scp-tech-cn
       id: tech

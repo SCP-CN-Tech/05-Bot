@@ -1,7 +1,7 @@
 let BaseModule = require("./base");
 const cheerio = require('cheerio');
 const winston = require('winston');
-const { parseTime } = require('../util');
+const { parseTime, delayMs } = require('../util');
 
 /**
  * Module that handles tiny articles management.
@@ -78,7 +78,7 @@ class TinyArticlesModule extends BaseModule {
     }
 
     for (let i = 0; i < all.length; i++) {
-      winston.debug(`[TinyArticles] Retreiving record ${i+1} of ${all.length}`)
+      winston.debug(`[TinyArticles] Retrieving record ${i+1} of ${all.length}`)
       let meta = $(all[i]).children('td')
       let rawname = $(meta[4]).text().trim()
       let user = {
@@ -88,6 +88,7 @@ class TinyArticlesModule extends BaseModule {
       }
       // extract user id if user is deleted
       if ($(meta[0]).text().trim()==="(user deleted)") {
+        await delayMs(this.delayMs);
         let $ = await this.site.history(rawname, {});
         $ = cheerio.load($.body);
         user.id = $("tbody").children("tr").last().find(`span[class="printuser deleted"]`).attr("data-id")
@@ -110,17 +111,20 @@ class TinyArticlesModule extends BaseModule {
     for (let i = 0; i < this.categories.length; i++) {
       let info = await this.getInfo({
         category: this.categories[i],
-      rating: `<=${this.threshold}`,
+        rating: `<=${this.threshold}`,
       });
-      info.forEach(v=>{
+      await delayMs(this.delayMs);
+      for (let v of info) {
         if (v.score <= this.threshold) {
-          this.site.delete(v.rawname).then(()=>{
+          try {
+            await this.site.delete(v.rawname);
             winston.verbose(`[TinyArticles] Deleted "${v.rawname}"`);
-          }).catch(e=>{
+          } catch (e) {
             winston.warn(`[TinyArticles] ${e.name} at deleting "${v.rawname}": ${e.message}`);
-          })
+          }
+          await delayMs(this.delayMs);
         }
-      });
+      }
     }
   }
 

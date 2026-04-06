@@ -2,6 +2,7 @@ let BaseModule = require("./base");
 const fs = require("fs");
 const cheerio = require('cheerio');
 const winston = require('winston');
+const { delayMs } = require("../util");
 
 /**
  * Module that handles mass tag updates.
@@ -61,7 +62,7 @@ class TagUpdateModule extends BaseModule {
     //console.log(res.body)
     let all = $('table.results').find('tr');
     for (let i = 0; i < all.length; i++) {
-      winston.debug(`[Tag updater] Retreiving page record ${i+1} of ${all.length}`)
+      winston.debug(`[Tag updater] Retrieving page record ${i+1} of ${all.length}`)
       let meta = $(all[i]).children('td');
       let rawname = $(meta[0]).text().trim();
       let pageinfo = {
@@ -82,7 +83,7 @@ class TagUpdateModule extends BaseModule {
       try {
         winston.verbose(`[Tag updater] Updating page tags for ${pageList[i].page} (${i+1} of ${pageList.length})`);
         await this.site.setTags(pageList[i].page, pageList[i].tags.split(" ").map(v=>v==oldTag?newTag:v));
-        await (new Promise((resolve)=>{ setTimeout(()=>{ resolve() }, 3000)}));
+        await delayMs(this.delayMs);
       } catch (e) {
         winston.error(`[Tag updater] Tags not updated for ${pageList[i].page}: ${e.message}`);
       }

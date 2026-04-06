@@ -3,7 +3,7 @@ const fs = require("fs");
 const cheerio = require('cheerio');
 const winston = require('winston');
 const nodeHtmlToImage = require('node-html-to-image');
-const { everyHalfHour } = require('../util');
+const { everyHalfHour, delayMs } = require('../util');
 
 /**
  * Module that handles contest results generation.
@@ -72,7 +72,7 @@ class ContestModule extends BaseModule {
     //console.log(res.body)
     let all = $('table.results').find('tr');
     for (let i = 0; i < all.length; i++) {
-      winston.debug(`[Contest] Retreiving contest score record ${i+1} of ${all.length}`)
+      winston.debug(`[Contest] Retrieving contest score record ${i+1} of ${all.length}`)
       let meta = $(all[i]).children('td');
       let rawname = $(meta[3]).text().trim();
       let user = {
@@ -81,6 +81,7 @@ class ContestModule extends BaseModule {
         id: $(meta[2]).text().trim(),
       }
       if (user.displayName==="(user deleted)") {
+        await delayMs(this.delayMs);
         let $ = await this.site.history(rawname, {});
         $ = cheerio.load($.body);
         user.id = $("tbody").children("tr").first().find(`span[class="printuser deleted"]`).attr("data-id")
@@ -161,6 +162,7 @@ class ContestModule extends BaseModule {
         ];
         // for (let i = 0; i < res.data.length; i++) {
         //   try {
+        //     await delayMs(this.delayMs);
         //     let urlHistory = await this.site.urlHistory(res.data[i].page);
         //     res.data[i].pageHistory = urlHistory;
         //     winston.debug(`Listed url history for page ${res.data[i].title}`);

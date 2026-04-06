@@ -90,6 +90,7 @@ class ModuleManager extends EventEmitter {
     for (const module in config.modules) {
       if (config.modules[module].enabled && this.modules[module] !== undefined) {
         this.loadedModules[module] = new this.modules[module](config.modules[module], this.sites);
+        if (config.wikidot?.delayMs) this.loadedModules[module].delayMs = config.wikidot.delayMs;
       };
     }
   }
