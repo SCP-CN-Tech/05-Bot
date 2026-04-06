@@ -9,12 +9,14 @@ const { parseTime } = require('../util');
 class TinyArticlesModule extends BaseModule {
   static id = "TinyArticles";
   interval = 10800000;   //  3h
+  threshold = -5;
 
   constructor(config, sites) {
     super(config);
 
     this.categories = config.categories;
     this.site = sites[config.site];
+    if (config.threshold) this.threshold = config.threshold;
     if (config.schedule) this.interval = parseTime(config.schedule);
   }
   
@@ -108,10 +110,10 @@ class TinyArticlesModule extends BaseModule {
     for (let i = 0; i < this.categories.length; i++) {
       let info = await this.getInfo({
         category: this.categories[i],
-        rating: "<=-5",
+      rating: `<=${this.threshold}`,
       });
       info.forEach(v=>{
-        if (v.score <= -5) {
+        if (v.score <= this.threshold) {
           this.site.delete(v.rawname).then(()=>{
             winston.verbose(`[TinyArticles] Deleted "${v.rawname}"`);
           }).catch(e=>{
@@ -127,7 +129,7 @@ class TinyArticlesModule extends BaseModule {
       created_at: null,
       category: "log-of-anomalous-items-cn",
       // category: "short-stories",
-      rating: "<=-5",
+      rating: `<=${this.threshold}`,
     })
   }
 

@@ -33,6 +33,7 @@ modules:
     site: cn
     categories:
       - short-stories
+    threshold: -5
   Contest:                                                # Contest results generation
     enabled: false
     site: cn
