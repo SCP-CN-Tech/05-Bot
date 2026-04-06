@@ -80,7 +80,6 @@ class ModuleManager extends EventEmitter {
     // -------- Handle wikidot site logins --------
 
     for (const site of config.wikidot.sites) {
-      console.log(site.id)
       this.sites[site.id] = new WD(site.name);
     }
 
@@ -141,4 +140,6 @@ class ModuleManager extends EventEmitter {
 }
 
 let bot = new ModuleManager();
-bot.start();
+bot.on("ready", () => {
+  bot.start();
+});
