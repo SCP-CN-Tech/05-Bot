@@ -137,6 +137,18 @@ class WD {
   	}, params));
   }
 
+  async urlHistory(page_or_id) {
+    let history = await this.history(page_or_id, { options: `{"move":true}` });
+    let $ = cheerio.load(history.body);
+    let cells = $("table.page-history tr[id] td:nth-child(7)");
+    let pages = [];
+    for (let i = 0; i < cells.length; i++) {
+      let comment = $(cells[i]).text().trim();
+      pages.push(comment.split(/\"|\&quot\;/gi)[1]);
+    }
+    return pages;
+  }
+
   async edit(wiki_page, params) {
     var lock = await this.module('edit/PageEditModule', {
             mode: 'page',
@@ -190,9 +202,43 @@ class WD {
     }, params));
   }
 
+  async getPageRatersRaw(page_or_id, params) {
+    let page_id = await this.resolvePageId(page_or_id);
+    let now1 = Date.now();
+    let res = await this.module("pagerate/WhoRatedPageModule", Object.assign({
+      pageId: `${page_id}`,
+    }, params));
+    let now2 = Date.now()
+    console.log(now2-now1)
+    return res;
+  }
+
+  /**
+   * @returns {Promise<{displayName: string, id: string, vote: string}[]>}
+   */
+  async getPageRaters(page_or_id, params) {
+    let res = await this.getPageRatersRaw(page_or_id, params);
+    let $ = cheerio.load(res.body);
+    let ratersRaw = $("div[style*=\"-moz-column-count\"]").find("span.printuser");
+    let info = [];
+    for (let i = 0; i < ratersRaw.length; i++) {
+      let user = {
+        displayName: $(ratersRaw[i]).text().trim(),
+        vote: $(ratersRaw[i].next.next).text().trim(),
+      }
+      if (user.displayName==="(account deleted)") {
+        user.id = $(ratersRaw[i]).attr("data-id");
+      } else {
+        user.id = $(ratersRaw[i]).find("a").attr("onclick").split("(")[1].split(")")[0];
+      }
+      info.push(user)
+    }
+    return info;
+  }
+
   async listPages(params) {
     return await this.module('list/ListPagesModule', Object.assign({
-      category: ".",
+      category: "*",
       order: "created_at desc desc",
       perPage: "20",
       separate: "true",
