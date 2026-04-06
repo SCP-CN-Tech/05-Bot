@@ -4,6 +4,7 @@ let Contest = require("./contest");
 let Undoer = require("./undoer");
 let AntiSpam = require("./antispam");
 let TagUpdate = require("./tagupdate");
+let ComponentUpdate = require("./componentupdate");
 
 function loadModules() {
   let moduleList = [
@@ -13,6 +14,7 @@ function loadModules() {
     Undoer,
     AntiSpam,
     TagUpdate,
+    ComponentUpdate,
   ];
 
   let modules = {};
