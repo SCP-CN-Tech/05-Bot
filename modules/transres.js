@@ -1,57 +1,39 @@
-const cheerio = require('cheerio');
+let BaseModule = require("./base");
 const got = require('got');
-const WD = require('./wikidot.js');
-const EventEmitter = require('events');
+const cheerio = require('cheerio');
 const winston = require('winston');
-const {branch, branchId, progressAlert} = require('./util');
+const { branch, branchId, progressAlert, parseTime } = require('../util');
 
-class CNTech extends EventEmitter {
-  constructor() {
-    super();
-
-    this.tech = new WD('scp-tech-cn');
-    this.cn = new WD('scp-wiki-cn');
-    this.reserves = [];
-    this.outdates = [];
+/**
+ * Module that handles translation reservation.
+ */
+class TransResModule extends BaseModule {
+  static id = "Transres";
+  intervals = {
+    outdate: 43200000,   // 12h
+    remove:  10800000,   //  3h
+    expire:  43200000,   // 12h
+    untag:   10800000,   //  3h
+    archive: 10800000,   //  3h
   }
 
-  loginAll(WD_NAME, WD_PW) {
-    let t = this.loginSite("tech", WD_NAME, WD_PW)
-    let c = this.loginSite("cn", WD_NAME, WD_PW)
-    Promise.all([t,c]).then(()=>{
-      this.emit('ready')
-      winston.info(`[CN-Tech] Bot is ready.`)
-    }).catch(e=>{
-      winston.error(`[CN-Tech] ${e.message}`)
-    })
-  }
-  loginSite(site, WD_NAME, WD_PW) {
-    let temp = this[site].login(WD_NAME, WD_PW)
-    temp.then(()=>{
-      winston.info(`[CN-Tech] Bot logged onto ${this[site].domain}.`)
-      winston.info(`[CN-Tech] ${this[site].domain} login expires on ${this[site].cookie.exp}.`)
-    })
-    if (this[site]._refresh) { clearInterval(this[site]._refresh) }
-    this[site]._refresh = setInterval(()=>{
-      try {
-        if (this[site].cookie.exp - Date.now() <= 2592000000) {
-          this[site].login(WD_NAME, WD_PW).then(res=>{
-            winston.info(`[CN-Tech] Bot logged onto ${this[site].domain}.`)
-            winston.info(`[CN-Tech] ${this[site].domain} login expires on ${this[site].cookie.exp}.`)
-          })
+  constructor(config, sites) {
+    super(config);
+
+    this.reserveSite = sites[config.reserveSite];
+    this.translateSite = sites[config.translateSite];
+    if (config.schedule) {
+      for (const task in config.schedule) {
+        if (this.intervals[task]) {
+          this.intervals[task] = parseTime(config.schedule[task]);
         }
-      } catch (e) {
-        winston.error(e.message)
       }
-    }, 864000000)
-    return temp;
+    }
   }
 
   async getInfo(params) {
     let info = [];
-    let cn = this.cn;
-    let tech = this.tech;
-    let res = await tech.listPages(Object.assign({
+    let res = await this.reserveSite.listPages(Object.assign({
       category: "reserve",
       created_at: "older than 30 day",
       order: "created_at desc desc",
@@ -107,18 +89,20 @@ class CNTech extends EventEmitter {
         unixname: $(meta[0]).text().trim()==="(user deleted)" ? null : $(meta[1]).text().trim(),
         id: $(meta[2]).text().trim(),
       }
+      // extract user id if user is deleted
       if ($(meta[0]).text().trim()==="(user deleted)") {
-        let $ = await tech.history(rawname, {});
+        let $ = await this.reserveSite.history(rawname, {});
         $ = cheerio.load($.body);
         user.id = $("tbody").children("tr").last().find(`span[class="printuser deleted"]`).attr("data-id")
       }
+      // extract target page and branch
       let temp = $(meta[3]).text().trim(), temp2 = null;
       let cat = parseInt(temp)==0 ? "wanderers:" : "";
       let temp3 = rawname.length >= 55 && $(meta[8]).text().trim().length ? $(meta[8]).text().trim() : $(meta[4]).text().trim();
       if (parseInt(temp)<0||parseInt(temp)>=15) { temp = null }
       else {
         temp2=`http://${branch[temp]}.wikidot.com`;
-        temp = await cn.quick("PageLookupQModule", {s:branchId[temp], q:temp3});
+        temp = await this.translateSite.quick("PageLookupQModule", {s:branchId[temp], q:temp3});
         temp = temp.pages.find(v=>v.unix_name === temp3);
       }
       let page = {
@@ -136,8 +120,9 @@ class CNTech extends EventEmitter {
         title: null,
         created: null,
       }
+      // handle wanderers library category stripping
       temp = `${cat}${page.name.startsWith("wanderers:") ? page.name.replace("wanderers:","") : page.name}`
-      let pageinfo = await cn.listPages({
+      let pageinfo = await this.translateSite.listPages({
         category: '*',
         fullname: temp.length>60 ? temp.substring(0,60) : temp,
         module_body: `[[table class="exist"]]
@@ -189,20 +174,20 @@ class CNTech extends EventEmitter {
     })
     info.forEach(v=>{
       if (v.trans.exist && v.created<=v.trans.created || v.created<=now-7776000000) {
-        this.tech.delete(v.rawname).then(()=>{
+        this.reserveSite.delete(v.rawname).then(()=>{
           winston.verbose(`[Transres] Deleted "${v.rawname}"`);
         }).catch(e=>{
           winston.warn(`[Transres] ${e.name} at deleting "${v.rawname}": ${e.message}`);
         })
       }
       else {
-        this.tech.rename(v.rawname, `outdate:${v.page.name}`).then(()=>{
+        this.reserveSite.rename(v.rawname, `outdate:${v.page.name}`).then(()=>{
           winston.verbose(`[Transres] Renamed "${v.rawname}" to "outdate:${v.page.name}"`);
         }).catch(e=>{
           if (e.name==='page_exists') {
-            this.tech.delete(`outdate:${v.page.name}`).then(()=>{
+            this.reserveSite.delete(`outdate:${v.page.name}`).then(()=>{
               winston.verbose(`[Transres] Deleted "outdate:${v.page.name}"`);
-              this.tech.rename(v.rawname, `outdate:${v.page.name}`).then(()=>{
+              this.reserveSite.rename(v.rawname, `outdate:${v.page.name}`).then(()=>{
                 winston.verbose(`[Transres] Renamed "${v.rawname}" to "outdate:${v.page.name}"`);
               }).catch(e=>{
                 winston.warn(`[Transres] ${e.name} at renaming "${v.rawname}": ${e.message}`);
@@ -237,14 +222,14 @@ class CNTech extends EventEmitter {
         tag.push("已翻译")
       }
       if (tag.length) {
-        this.tech.tags(v.rawname, {add: tag}).catch(e=>{
+        this.reserveSite.tags(v.rawname, {add: tag}).catch(e=>{
           winston.warn(`[Transres] ${e.name} at tagging "${v.rawname}": ${e.message}`);
         })
       }
     })
     info2.forEach(v=>{
       if (!v.page.exist || v.trans.exist) {
-        this.tech.delete(v.rawname).then(()=>{
+        this.reserveSite.delete(v.rawname).then(()=>{
           winston.verbose(`[Transres] Deleted "${v.rawname}"`);
         }).catch(e=>{
           winston.warn(`[Transres] ${e.name} at deleting "${v.rawname}": ${e.message}`);
@@ -261,7 +246,7 @@ class CNTech extends EventEmitter {
     })
     info.forEach(v=>{
       if (!v.trans.exist) {
-        this.tech.tags(v.rawname, {remove: "已翻译"}).catch(e=>{
+        this.reserveSite.tags(v.rawname, {remove: "已翻译"}).catch(e=>{
           winston.warn(`[Transres] ${e.name} at tagging "${v.rawname}": ${e.message}`);
         })
       }
@@ -274,7 +259,7 @@ class CNTech extends EventEmitter {
       created_at: "older than 90 day"
     })
     info.forEach(v=>{
-      this.tech.delete(v.rawname).then(()=>{
+      this.reserveSite.delete(v.rawname).then(()=>{
         winston.verbose(`[Transres] Deleted "${v.rawname}"`);
       }).catch(e=>{
         winston.warn(`[Transres] ${e.name} at deleting "${v.rawname}": ${e.message}`);
@@ -316,5 +301,49 @@ class CNTech extends EventEmitter {
       category: "outdate",
     })
   }
+
+  async start() {
+    this.schedule = {
+      outdate: setInterval(()=>{
+        return this.outdate().catch(e=>winston.error(e.stack));
+      }, this.intervals.outdate),
+      remove: setInterval(()=>{
+        return this.remove().catch(e=>winston.error(e.stack));
+      }, this.intervals.remove),
+      expire: setInterval(()=>{
+        return this.expire().catch(e=>winston.error(e.stack));
+      }, this.intervals.expire),
+      untag: setInterval(()=>{
+        return this.untag().catch(e=>winston.error(e.stack));
+      }, this.intervals.untag),
+    }
+    this.outdate().catch(e=>winston.error(e.stack));
+    this.remove().catch(e=>winston.error(e.stack));
+    this.expire().catch(e=>winston.error(e.stack));
+    this.untag().catch(e=>winston.error(e.stack));
+    if (this.config.archiver?.enabled) {
+      this.schedule.archive = setInterval(()=>{
+        return this.updateArchive(this.config.archiver.api, this.config.archiver.token).catch(e=>winston.error(e.stack));
+      }, this.intervals.archive),
+      this.updateArchive(this.config.archiver.api, this.config.archiver.token).catch(e=>winston.error(e.stack));
+    }
+
+    // this.debug().then(res=>{
+    //   // fs.writeFileSync('./data/trans-reserve.json', JSON.stringify(res, null, 2), 'utf8')
+    //   //console.log(res)
+    //   console.log(`Retrieved ${res.length} records.`)
+    // }).catch(e=>winston.error(e.stack))
+  }
+
+  async stop() {
+    clearInterval(this.schedule.outdate);
+    clearInterval(this.schedule.remove);
+    clearInterval(this.schedule.expire);
+    clearInterval(this.schedule.untag);
+    if (this.config.archiver?.enabled) {
+      clearInterval(this.schedule.archive);
+    }
+  }
 }
-module.exports = CNTech;
+
+module.exports = TransResModule;
