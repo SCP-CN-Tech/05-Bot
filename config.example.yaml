@@ -1,0 +1,71 @@
+logLevel: debug
+logFile: null
+
+wikidot:
+  username: ""
+  password: ""
+  delayMs: 1000
+  sites:
+    - name: scp-tech-cn
+      id: tech
+    - name: scp-wiki-cn
+      id: cn
+    # - name: backrooms-wiki-cn
+    #   id: br
+
+modules:
+  Transres:                                               # Translation reservation management
+    enabled: false
+    archiver:                                             # Refer to https://github.com/SCP-CN-Tech/Translation-Reserve
+      enabled: true
+      api: https://localhost:443/api/upsert
+      token: ""
+    reserveSite: tech
+    translateSite: cn
+    schedule:
+      outdate: 12h
+      remove: 3h
+      expire: 12h
+      untag: 3h
+      archive: 3h
+  TinyArticles:                                           # Tiny articles management
+    enabled: false
+    site: cn
+    categories:
+      - short-stories
+  Contest:                                                # Contest results generation
+    enabled: false
+    site: cn
+    tags: +2026冬季征文 -竞赛 -中心 -掩藏页 -作者
+  Undoer:                                                 # Mass rollback against destruction
+    enabled: false
+    site: cn
+    targetUser: ""
+    keywords:
+      comment: ""
+      site: ""
+  AntiSpam:                                               # Mass deletion against destruction
+    enabled: false
+    site: br
+    targetUser: ""
+    keywords:
+      title: ""
+      site: ""
+  TagUpdate:                                              # Mass tag update
+    enabled: false
+    site: cn
+    from: 本质促动
+    to: 现实扭曲
+  UncommonTags:                                           # Listing uncommon tags
+    enabled: false
+    site: cn
+  ComponentUpdate:                                        # Component include variables update
+    enabled: false
+    site: br
+    component: component:level-class
+    variable:
+      name: lang
+      default: cn
+  OrphanedFragments:                                      # Listing orphaned fragment pages
+    enabled: false
+    site: cn
