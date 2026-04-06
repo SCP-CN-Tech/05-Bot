@@ -105,7 +105,13 @@ dist
 
 # Config
 config.json
+config*.json
+config.yaml
+config*.yaml
+config.yml
+config*.yml
 
 # Runtime files
 package-lock.json
 data/
+pnpm-lock.yaml
