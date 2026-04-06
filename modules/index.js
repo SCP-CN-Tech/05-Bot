@@ -2,6 +2,7 @@ let Transres = require("./transres");
 let TinyArticles = require("./tinyarticles");
 let Contest = require("./contest");
 let Undoer = require("./undoer");
+let AntiSpam = require("./antispam");
 
 function loadModules() {
   let moduleList = [
@@ -9,6 +10,7 @@ function loadModules() {
     TinyArticles,
     Contest,
     Undoer,
+    AntiSpam,
   ];
 
   let modules = {};
