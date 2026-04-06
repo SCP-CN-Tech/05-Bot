@@ -3,6 +3,7 @@ let TinyArticles = require("./tinyarticles");
 let Contest = require("./contest");
 let Undoer = require("./undoer");
 let AntiSpam = require("./antispam");
+let TagUpdate = require("./tagupdate");
 
 function loadModules() {
   let moduleList = [
@@ -11,6 +12,7 @@ function loadModules() {
     Contest,
     Undoer,
     AntiSpam,
+    TagUpdate,
   ];
 
   let modules = {};

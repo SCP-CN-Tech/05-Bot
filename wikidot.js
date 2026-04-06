@@ -182,7 +182,16 @@ class WD {
       event: 'saveTags',
       pageId: page_id,
       tags: tags.join(" "),
-    })
+    });
+  }
+
+  async setTags(page_or_id, tags) {
+    let page_id = await this.resolvePageId(page_or_id);
+    return await this.action('WikiPageAction', {
+      event: 'saveTags',
+      pageId: page_id,
+      tags: tags.join(" "),
+    });
   }
 
   async delete(page_or_id, params) {
