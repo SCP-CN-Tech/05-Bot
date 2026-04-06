@@ -194,6 +194,22 @@ class WD {
     });
   }
 
+  async tagCloud(params) {
+    let parameters = Object.assign({
+      limit: 10000,
+      maxFontSize: "1000%",
+      minFontSize: "1%",
+    }, params);
+    let paramStr = "";
+    for (const key in parameters) {
+      paramStr += ` ${key}="${parameters[key]}"`
+    }
+    return await this.module("edit/PagePreviewModule", {
+      mode: "page",
+      source: `[[module TagCloud${paramStr}]]`
+    });
+  }
+
   async delete(page_or_id, params) {
     let page_id = await this.resolvePageId(page_or_id);
     return await this.action('WikiPageAction', Object.assign({

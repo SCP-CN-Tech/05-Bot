@@ -5,6 +5,7 @@ let Undoer = require("./undoer");
 let AntiSpam = require("./antispam");
 let TagUpdate = require("./tagupdate");
 let ComponentUpdate = require("./componentupdate");
+let UncommonTags = require("./uncommontags");
 
 function loadModules() {
   let moduleList = [
@@ -15,6 +16,7 @@ function loadModules() {
     AntiSpam,
     TagUpdate,
     ComponentUpdate,
+    UncommonTags,
   ];
 
   let modules = {};
