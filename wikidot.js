@@ -343,5 +343,14 @@ class WD {
     
     return {backlinkedPages, internalInclude,externalInclude};
   }
+
+  async listUserRev(id, perpage, page) {
+    let info = await this.module("userinfo/UserChangesListModule", {
+      userId: `${parseInt(id)}`,
+      perpage: `${perpage}`,
+      page: page
+    });
+    return {body: info.body, ex: info.body.trim()!==`Sorry, no revisions matching your criteria.`};
+  }
 }
 module.exports = WD;
