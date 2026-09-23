@@ -14,7 +14,7 @@ class WD {
   }
   wiki(base) {
     this.domain = base;
-    if (!base.startsWith("http")) { base = `http://${base}.wikidot.com` }
+    if (!base.startsWith("http")) { base = `https://${base}.wikidot.com` }
     this.base = base;
     this.ajax = `${base}/ajax-module-connector.php`;
     this.quic = `${base}/quickmodule.php`;

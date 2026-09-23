@@ -102,7 +102,7 @@ class TransResModule extends BaseModule {
       let temp3 = rawname.length >= 55 && $(meta[8]).text().trim().length ? $(meta[8]).text().trim() : $(meta[4]).text().trim();
       if (parseInt(temp)<0||parseInt(temp)>=15) { temp = null }
       else {
-        temp2=`http://${branch[temp]}.wikidot.com`;
+        temp2=`https://${branch[temp]}.wikidot.com`;
         await delayMs(this.delayMs);
         temp = await this.translateSite.quick("PageLookupQModule", {s:branchId[temp], q:temp3});
         temp = temp.pages.find(v=>v.unix_name === temp3);
