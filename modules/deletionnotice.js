@@ -94,19 +94,19 @@ class DeletionNoticeModule extends BaseModule {
       let meta = $(all[i]).children('td')
       let rawname = $(meta[4]).text().trim()
       if (this.whitelist.includes(rawname)) continue;
-      let user = {
-        displayName: $(meta[0]).text().trim(),
-        unixname: $(meta[0]).text().trim()==="(user deleted)" ? null : $(meta[1]).text().trim(),
-        id: $(meta[2]).text().trim(),
-      }
-      // extract user id if user is deleted
-      if ($(meta[0]).text().trim()==="(user deleted)") {
-        await delayMs(this.delayMs);
-        let $ = await this.site.history(rawname, {});
-        $ = cheerio.load($.body);
-        user.id = $("tbody").children("tr").last().find(`span[class="printuser deleted"]`).attr("data-id")
-      }
-      await delayMs(this.delayMs);
+      // let user = {
+      //   displayName: $(meta[0]).text().trim(),
+      //   unixname: $(meta[0]).text().trim()==="(user deleted)" ? null : $(meta[1]).text().trim(),
+      //   id: $(meta[2]).text().trim(),
+      // }
+      // // extract user id if user is deleted
+      // if ($(meta[0]).text().trim()==="(user deleted)") {
+      //   await delayMs(this.delayMs);
+      //   let $ = await this.site.history(rawname, {});
+      //   $ = cheerio.load($.body);
+      //   user.id = $("tbody").children("tr").last().find(`span[class="printuser deleted"]`).attr("data-id")
+      // }
+      // await delayMs(this.delayMs);
       let pageId = await this.site.resolvePageId(rawname)
       let threadId = await this.site.resolvePageDiscussion(pageId);
       // extract page data
@@ -114,7 +114,7 @@ class DeletionNoticeModule extends BaseModule {
         url: `${this.site.base}/${rawname}`,
         rawname,
         id: pageId,
-        author: user,
+        // author: user,
         title: $(meta[5]).text().trim(),
         score: parseInt($(meta[7]).text().trim()),
         created: parseInt($(meta[6]).children('span').attr('class').split(' ')[1].substring(5)+'000'),
