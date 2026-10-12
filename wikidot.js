@@ -190,7 +190,7 @@ class WD {
     return await this.action('WikiPageAction', {
       event: 'saveTags',
       pageId: page_id,
-      tags: tags.join(" "),
+      tags: Array.isArray(tags) ? tags.join(" ") : tags,
     });
   }
 
