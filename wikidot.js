@@ -73,7 +73,7 @@ class WD {
 			}
 		})
     if (res.body.includes("The login and password do not match.")) {throw new Error("Wikidot login and password do not match.")}
-    let tmp = res.headers['set-cookie'][1].split("; ")
+    let tmp = res.headers['set-cookie'].find(v=>v.includes("WIKIDOT_SESSION_ID=")).split("; ")
   	this.cookie.sess = tmp[0]
   	this.cookie.expire = tmp[1].split("=")[1]
     this.cookie.exp = new Date(this.cookie.expire.split(",").pop().split("-").join(" "))
