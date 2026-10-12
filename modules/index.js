@@ -1,5 +1,6 @@
 let Transres = require("./transres");
 let TinyArticles = require("./tinyarticles");
+let DeletionNotice = require("./deletionnotice");
 let Contest = require("./contest");
 let Undoer = require("./undoer");
 let AntiSpam = require("./antispam");
@@ -12,6 +13,7 @@ function loadModules() {
   let moduleList = [
     Transres,
     TinyArticles,
+    DeletionNotice,
     Contest,
     Undoer,
     AntiSpam,

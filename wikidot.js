@@ -377,5 +377,44 @@ class WD {
     });
     return {body: info.body, ex: info.body.trim()!==`Sorry, no revisions matching your criteria.`};
   }
+
+  async resolvePageDiscussion(page_or_id, params) {
+    let page_id = await this.resolvePageId(page_or_id);
+    return await this.module('forum/ForumCommentsListModule', Object.assign({
+      pageId: page_id,
+    }, params)).then(res=>res.threadId);
+  }
+
+  async createPageDiscussion(page_or_id, params) {
+    let page_id = await this.resolvePageId(page_or_id);
+    return await this.action('ForumAction', Object.assign({
+      event: 'createPageDiscussionThread',
+      page_id,
+    }, params)).then(res=>res.thread_id);
+  }
+
+  async listPageDiscussion(page_or_id, params) {
+    let page_id = await this.resolvePageId(page_or_id);
+    return await this.module('forum/ForumCommentsListModule', Object.assign({
+      pageId: page_id,
+    }, params));
+  }
+
+  async sendForumPost(thread_id, params) {
+    return await this.action('ForumAction', Object.assign({
+      event: "savePost",
+      threadId: thread_id,
+      // parentId: "",
+      // title: "",
+      // source: "",
+    }, params));
+  }
+
+  async listForumThreadPost(thread_id, params) {
+    return await this.module('forum/ForumViewThreadPostsModule', Object.assign({
+      t: thread_id,
+      // pageNo: 1,
+    }, params))
+  }
 }
 module.exports = WD;

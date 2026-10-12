@@ -34,6 +34,27 @@ modules:
     categories:
       - short-stories
     threshold: -5
+  DeletionNotice:                                         # Deletion notice
+    enabled: false
+    site: cn
+    filters:
+      - tags: scp wanderers 故事 goi格式 艺术作品 中心 文章 样版 版式 -被归档 -掩藏页 -待删除 -重写中 -作者 +原创
+        category: -fragment -deleted -non-rate
+        threshold: -5
+        instakill: -20
+        countdown: 72h
+    whitelist:
+      - statement-on-disabling-offset
+    tags:
+      - 原创
+      - 待删除
+    title: 職員帖
+    source: |
+      由于条目的分数为{$rating}分，现根据[[[deletions-guide|删帖指导]]]，宣告将删除此页：
+
+      [[iframe https://scpwiki.github.io/timer/timer.html?lang=cn&time={$time}&progress=%E6%AD%A4%E9%A1%B5%E9%9D%A2%E5%B0%86%E5%9C%A8%E8%AE%A1%E6%97%B6%E5%99%A8%E5%88%B0%E6%9C%9F%E5%90%8E%E5%8F%AF%E4%BE%9B%E5%88%A0%E9%99%A4%EF%BC%9A&finished=%E6%AD%A4%E9%A1%B5%E9%9D%A2%E5%9C%A8%E4%B8%8B%E5%88%97%E6%97%B6%E9%97%B4%E5%89%8D%E5%B7%B2%E5%8F%AF%E4%BE%9B%E5%88%A0%E9%99%A4%EF%BC%9A style="width: 750px; height: 200px; border: 0; text-align: center;"]]
+
+      **如果你不是作者又想要重写该条目，请在此帖回复申请。请先取得作者（或管理员，如果此文档搬运自聊天室的话）的同意，并将原文的源代码复制至沙盒里。除非你是工作人员，否则请勿就申请重写以外的范围回复此帖。**
   Contest:                                                # Contest results generation
     enabled: false
     site: cn
