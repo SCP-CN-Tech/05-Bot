@@ -146,10 +146,10 @@ class DeletionNoticeModule extends BaseModule {
         category: this.filters[i].category,
         rating: `<=${this.filters[i].threshold}`,
       });
-      if (this.filters[i].instakill !== undefined) info = info.filter(v=>v.score > this.filters[i].instakill);
       await delayMs(this.delayMs);
       for (let v of info) {
-        if (v.score <= this.filters[i].threshold) {
+        let notInstakill = this.filters[i].instakill === undefined || (v.score > this.filters[i].instakill)
+        if (v.score <= this.filters[i].threshold && notInstakill) {
           try {
             await this.sendNotice(v.id, v.score, new Date(Date.now() + this.filters[i].countdown));
             winston.verbose(`[DeletionNotice] Sent deletion notice for "${v.rawname}"`);
