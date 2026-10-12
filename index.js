@@ -111,7 +111,7 @@ class ModuleManager extends EventEmitter {
           })
         }
       } catch (e) {
-        winston.error(`[05-Bot] ${e.message}`);
+        winston.error(`[05-Bot] Login failed for ${this.sites[site].domain}: ${e.message}`);
       }
     }, 864000000)
     return temp;
@@ -122,7 +122,7 @@ class ModuleManager extends EventEmitter {
       winston.info(`[05-Bot] Bot is ready.`);
       this.emit('ready');
     }).catch(e=>{
-      winston.error(`[05-Bot] ${e.message}`);
+      winston.error(`[05-Bot] Login failed: ${e.message}`);
       process.exit(0);
     })
   }
