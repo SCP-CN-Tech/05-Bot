@@ -150,17 +150,28 @@ class DeletionNoticeModule extends BaseModule {
       for (let v of info) {
         let notInstakill = this.filters[i].instakill === undefined || (v.score > this.filters[i].instakill)
         if (v.score <= this.filters[i].threshold && notInstakill) {
-          try {
-            await this.sendNotice(v.id, v.score, new Date(Date.now() + this.filters[i].countdown));
-            winston.verbose(`[DeletionNotice] Sent deletion notice for "${v.rawname}"`);
-          } catch (e) {
-            winston.warn(`[DeletionNotice] ${e.name} at sending deletion notice for "${v.rawname}": ${e.message}`);
+          let retry = true;
+          while (retry) {
+            try {
+              await this.sendNotice(v.id, v.score, new Date(Date.now() + this.filters[i].countdown));
+              retry = false;
+              winston.verbose(`[DeletionNotice] Sent deletion notice for "${v.rawname}"`);
+            } catch (e) {
+              winston.warn(`[DeletionNotice] ${e.name} at sending deletion notice for "${v.rawname}": ${e.message}`);
+              if (e.name !== "try_again") retry = false;
+            }
           }
-          try {
-            await this.site.setTags(v.id, this.deletionTags);
-            winston.verbose(`[DeletionNotice] Set deletion tags for "${v.rawname}"`);
-          } catch (e) {
-            winston.warn(`[DeletionNotice] ${e.name} at setting deletion tags for "${v.rawname}": ${e.message}`);
+          retry = true;
+          await delayMs(this.delayMs);
+          while (retry) {
+            try {
+              await this.site.setTags(v.id, this.deletionTags);
+              retry = false;
+              winston.verbose(`[DeletionNotice] Set deletion tags for "${v.rawname}"`);
+            } catch (e) {
+              winston.warn(`[DeletionNotice] ${e.name} at setting deletion tags for "${v.rawname}": ${e.message}`);
+              if (e.name !== "try_again") retry = false;
+            }
           }
           await delayMs(this.delayMs);
         }
