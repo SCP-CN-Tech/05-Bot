@@ -97,7 +97,7 @@ class WD {
 		    .replace(/WIKIREQUEST\.info\.pageId\s*=\s*(\d+)\s*;/g, (_, id)=>{
 			page_id = id
 		});
-    return page_id;
+    return typeof page_id === "string" ? parseInt(page_id) : null;
   }
   
   async resolvePageId(page_or_id) {
