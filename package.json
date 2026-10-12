@@ -4,7 +4,7 @@
   "description": "A bot for translation reservation management of SCP-CN (for now)",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js"
   },
   "repository": {
     "type": "git",
