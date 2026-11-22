@@ -38,6 +38,7 @@ modules:
     enabled: false
     site: cn
     filters:
+      # Try to have these filter selectors be mutually exclusive to prevent problems with setting different deletion tags on the same page
       - tags: scp wanderers 故事 goi格式 艺术作品 中心 文章 样版 版式 -被归档 -掩藏页 -待删除 -重写中 -作者 +原创 +2026新人竞赛
         category: -fragment -deleted -non-rate
         threshold: -5
