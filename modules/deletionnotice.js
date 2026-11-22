@@ -147,6 +147,7 @@ class DeletionNoticeModule extends BaseModule {
         rating: `<=${this.filters[i].threshold}`,
       });
       await delayMs(this.delayMs);
+      let deletionTags = this.filters[i].deletionTags ?? this.deletionTags;
       for (let v of info) {
         let notInstakill = this.filters[i].instakill === undefined || (v.score > this.filters[i].instakill)
         if (v.score <= this.filters[i].threshold && notInstakill) {
@@ -165,7 +166,7 @@ class DeletionNoticeModule extends BaseModule {
           await delayMs(this.delayMs);
           while (retry) {
             try {
-              await this.site.setTags(v.id, this.deletionTags);
+              await this.site.setTags(v.id, deletionTags);
               retry = false;
               winston.verbose(`[DeletionNotice] Set deletion tags for "${v.rawname}"`);
             } catch (e) {
